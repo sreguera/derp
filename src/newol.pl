@@ -20,6 +20,11 @@
 :- use_module(parser).
 :- use_module(interp).
 
+:- multifile prolog_message//1.
+
+prolog:message(unexpected_char(Char, pos(L, C))) -->
+        ['Unexpected char "~c" at line ~d, column ~d'-[Char, L, C]].
+
 execute_source(Input, Output) :-
         lexer:scan(Input, Tokens),
         parser:parse(Tokens, AST),
@@ -39,7 +44,9 @@ run :-
         append(_SysArgs, ['--'|AppArgs], Args),
         !,
         parse_args(AppArgs, Opts, PosArgs),
-        execute_with_args(Opts, PosArgs).
+        catch(execute_with_args(Opts, PosArgs),
+              E,
+              (print_message(error, E), fail)).
 
 
 %% parse_args(+Args, -Options, -PositionalArgs)
