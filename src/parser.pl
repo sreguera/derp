@@ -33,6 +33,16 @@ expression_list_aux(E, E) -->
         [].
 
 expression(E) -->
+        [if],
+        !,
+        relation(R),
+        [then],
+        expression_list(TL),
+        [else],
+        expression_list(EL),
+        [endif],
+        { E = if(R, TL, EL) }.
+expression(E) -->
         relation(E).
 
 relation(R) -->
@@ -84,6 +94,10 @@ multiplying_operator('*') --> ['*'].
 
 test(basic) :-
         parse([num(1)], num(1)).
+
+test(if) :-
+        parse([if, num(1), '<', num(2), then, num(1), else, num(2), endif],
+              if(op('<', num(1), num(2)), num(1), num(2))).
 
 test(seq) :-
         parse([num(1), ';', num(2)], seq(num(1), num(2))).

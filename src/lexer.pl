@@ -32,6 +32,17 @@ scan([Char|Chars], Pos, [Token|Tokens]) :-
         update_pos([Char], Pos, Pos1),
         scan(Chars, Pos1, Tokens).
 scan([Char|Chars], Pos, [Token|Tokens]) :-
+        identifier_start_char(Char),
+        !,
+        span(identifier_extend_char, Chars, Extend, RestChars),
+        atom_codes(Identifier, [Char|Extend]),
+        (  reserved_word(Identifier)
+        -> Token = Identifier
+        ;  Token = id(Identifier)
+        ),
+        update_pos([Char|Extend], Pos, Pos1),
+        scan(RestChars, Pos1, Tokens).
+scan([Char|Chars], Pos, [Token|Tokens]) :-
         digit_char(Char),
         !,
         span(digit_char, Chars, Extend, RestChars),
@@ -58,8 +69,20 @@ delimiter(0'<).
 delimiter(0';).
 
 
+identifier_start_char(C) :-
+        code_type(C, alpha).
+
+identifier_extend_char(C) :-
+        code_type(C, alnum).
+
 digit_char(C) :-
         code_type(C, digit).
+
+
+reserved_word(if).
+reserved_word(then).
+reserved_word(else).
+reserved_word(endif).
 
 
 update_pos([], pos(L, C), pos(L, C)).
@@ -88,6 +111,9 @@ test(pos) :-
 
 test(delimiters) :-
         scan("+*<", ['+', '*', '<']).
+
+test(keywords) :-
+        scan("if then else endif", [if, then, else, endif]).
 
 test(numbers) :-
         scan("123 234", [num(123), num(234)]).

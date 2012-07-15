@@ -20,6 +20,12 @@ execute(seq(E1, E2), V) :-
         execute(E1, _V1),
         execute(E2, V2),
         V = V2.
+execute(if(C, T, E), V) :-
+        execute(C, CV),
+        (  CV = true
+        -> execute(T, V)
+        ;  execute(E, V)
+        ).
 execute(num(N), N).
 execute(op(O, E1, E2), V) :-
         execute(E1, V1),
@@ -44,5 +50,8 @@ test(add) :-
 
 test(gt) :-
         execute(op('<', num(1), num(2)), true).
+
+test(if) :-
+        execute(if(op('<', num(1), num(2)), num(3), num(4)), 3).
 
 :- end_tests(interp).
