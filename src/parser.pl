@@ -90,7 +90,13 @@ term_aux(T, T) -->
         [].
 
 primary(num(N)) -->
-        [token(_, num, N)].
+        [token(_, num, N)],
+        !.
+primary(E) -->
+        [token(_, '(', _)],
+        !,
+        expression(E),
+        expect(')').
 
 relational_operator('<') --> [token(_, '<', _)].
 

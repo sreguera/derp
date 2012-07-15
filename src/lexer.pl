@@ -66,6 +66,8 @@ delimiter(0'*).
 delimiter(0'+).
 delimiter(0'<).
 delimiter(0';).
+delimiter(0'().
+delimiter(0')).
 
 
 identifier_start_char(C) :-
