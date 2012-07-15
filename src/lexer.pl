@@ -25,29 +25,28 @@ scan([Char|Chars], Pos, Tokens) :-
         !,
         update_pos([Char], Pos, Pos1),
         scan(Chars, Pos1, Tokens).
-scan([Char|Chars], Pos, [Token|Tokens]) :-
+scan([Char|Chars], Pos, [token(Pos, Type, Type)|Tokens]) :-
         delimiter(Char),
         !,
-        atom_codes(Token, [Char]),
+        atom_codes(Type, [Char]),
         update_pos([Char], Pos, Pos1),
         scan(Chars, Pos1, Tokens).
-scan([Char|Chars], Pos, [Token|Tokens]) :-
+scan([Char|Chars], Pos, [token(Pos, Type, Value)|Tokens]) :-
         identifier_start_char(Char),
         !,
         span(identifier_extend_char, Chars, Extend, RestChars),
         atom_codes(Identifier, [Char|Extend]),
         (  reserved_word(Identifier)
-        -> Token = Identifier
-        ;  Token = id(Identifier)
+        -> Type = Identifier, Value = Identifier
+        ;  Type = id, Value = Identifier
         ),
         update_pos([Char|Extend], Pos, Pos1),
         scan(RestChars, Pos1, Tokens).
-scan([Char|Chars], Pos, [Token|Tokens]) :-
+scan([Char|Chars], Pos, [token(Pos, num, Number)|Tokens]) :-
         digit_char(Char),
         !,
         span(digit_char, Chars, Extend, RestChars),
         number_codes(Number, [Char|Extend]),
-        Token = num(Number),
         update_pos([Char|Extend], Pos, Pos1),
         scan(RestChars, Pos1, Tokens).
 scan([Char|_], Pos, _) :-
@@ -110,13 +109,17 @@ test(pos) :-
         update_pos("hello", pos(1, 1), pos(1, 6)).
 
 test(delimiters) :-
-        scan("+*<", ['+', '*', '<']).
+        scan("+*<",
+             [token(_, '+', '+'), token(_, '*', '*'), token(_, '<', '<')]).
 
 test(keywords) :-
-        scan("if then else endif", [if, then, else, endif]).
+        scan("if then else endif",
+             [token(_, if, if), token(_, then, then),
+              token(_, else, else), token(_, endif, endif)]).
 
 test(numbers) :-
-        scan("123 234", [num(123), num(234)]).
+        scan("123 234",
+             [token(_, num, 123), token(_, num, 234)]).
 
 test(error, [throws(unexpected_char(0'!, pos(2, 5)))]) :-
         scan("\n123 !", _).

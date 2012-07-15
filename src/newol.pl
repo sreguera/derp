@@ -24,6 +24,8 @@
 
 prolog:message(unexpected_char(Char, pos(L, C))) -->
         ['Unexpected char "~c" at line ~d, column ~d'-[Char, L, C]].
+prolog:message(parse_error(pos(L, C))) -->
+        ['Parse error at line ~d, column ~d'-[L, C]].
 
 execute_source(Input, Output) :-
         lexer:scan(Input, Tokens),
