@@ -19,7 +19,7 @@
 scan(Chars, Tokens) :-
         scan(Chars, pos(1, 1), Tokens).
 
-scan([], _, []).
+scan([], Pos, [token(Pos, eof, eof)]).
 scan([Char|Chars], Pos, Tokens) :-
         separator(Char),
         !,
@@ -110,16 +110,18 @@ test(pos) :-
 
 test(delimiters) :-
         scan("+*<",
-             [token(_, '+', '+'), token(_, '*', '*'), token(_, '<', '<')]).
+             [token(_, '+', '+'), token(_, '*', '*'), token(_, '<', '<'),
+              token(_, eof, eof)]).
 
 test(keywords) :-
         scan("if then else endif",
              [token(_, if, if), token(_, then, then),
-              token(_, else, else), token(_, endif, endif)]).
+              token(_, else, else), token(_, endif, endif),
+              token(_, eof, eof)]).
 
 test(numbers) :-
         scan("123 234",
-             [token(_, num, 123), token(_, num, 234)]).
+             [token(_, num, 123), token(_, num, 234), token(_, eof, eof)]).
 
 test(error, [throws(unexpected_char(0'!, pos(2, 5)))]) :-
         scan("\n123 !", _).

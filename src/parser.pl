@@ -18,8 +18,12 @@
 
 
 parse(Tokens, AST) :-
-        phrase(expression_list(AST), Tokens).
+        phrase(definition(AST), Tokens).
 
+definition(P) -->
+        expression_list(P),
+        expect(eof).
+        
 expression_list(L) -->
         expression(E),
         expression_list_aux(E, L).
@@ -35,12 +39,12 @@ expression_list_aux(E, E) -->
 expression(E) -->
         [token(_, if, _)],
         !,
-        relation(R),
-        [token(_, then, _)],
+        expression(R),
+        expect(then),
         expression_list(TL),
-        [token(_, else, _)],
+        expect(else),
         expression_list(EL),
-        [token(_, endif, _)],
+        expect(endif),
         { E = if(R, TL, EL) }.
 expression(E) -->
         relation(E),
@@ -94,43 +98,60 @@ binary_adding_operator('+') --> [token(_, '+', _)].
 
 multiplying_operator('*') --> [token(_, '*', _)].
 
+expect(E) -->
+        [token(_, E, _)],
+        !.
+expect(_) -->
+        [token(Pos, _, _)],
+        { throw(parse_error(Pos)) }.
+
+
 :- begin_tests(parser).
 
 test(basic) :-
-        parse([token(_, num, 1)], num(1)).
+        parse([token(_, num, 1), token(_, eof, eof)], num(1)).
 
 test(if) :-
         parse([token(_, if, _),
                token(_, num, 1), token(_, '<', _), token(_, num, 2),
                token(_, then, _), token(_, num, 1),
                token(_, else, _), token(_, num, 2),
-               token(_, endif, _)],
+               token(_, endif, _), token(_, eof, eof)],
               if(op('<', num(1), num(2)), num(1), num(2))).
 
 test(seq) :-
-        parse([token(_, num, 1), token(_, ';', _), token(_, num, 2)],
+        parse([token(_, num, 1), token(_, ';', _), token(_, num, 2),
+               token(_, eof, eof)],
               seq(num(1), num(2))).
 
+test(seq2) :-
+        parse([token(_, num, 1), token(_, '+', _), token(_, num, 2),
+               token(_, ';', _), token(_, num, 3), token(_, eof, eof)],
+              seq(op('+', num(1), num(2)), num(3))).
+
 test(gt) :-
-        parse([token(_, num, 1), token(_, '<', _), token(_, num, 2)],
+        parse([token(_, num, 1), token(_, '<', _), token(_, num, 2),
+               token(_, eof, eof)],
               op('<', num(1), num(2))).
 
 test(add) :-
-        parse([token(_, num, 1), token(_, '+', _), token(_, num, 2)],
+        parse([token(_, num, 1), token(_, '+', _), token(_, num, 2),
+               token(_, eof, eof)],
               op('+', num(1), num(2))).
 
 test(mul) :-
-        parse([token(_, num, 1), token(_, '*', _), token(_, num, 2)],
+        parse([token(_, num, 1), token(_, '*', _), token(_, num, 2),
+               token(_, eof, eof)],
               op('*', num(1), num(2))).
 
 test(addadd) :-
         parse([token(_, num, 1), token(_, '+', _), token(_, num, 2),
-               token(_, '+', _), token(_, num, 3)],
+               token(_, '+', _), token(_, num, 3), token(_, eof, eof)],
               op('+', op('+', num(1), num(2)), num(3))).
 
 test(addmul) :-
         parse([token(_, num, 1), token(_, '+', _), token(_, num, 2),
-               token(_, '*', _), token(_, num, 3)],
+               token(_, '*', _), token(_, num, 3), token(_, eof, eof)],
               op('+', num(1), op('*', num(2), num(3)))).
 
 :- end_tests(parser).
