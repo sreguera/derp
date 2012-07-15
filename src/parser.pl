@@ -43,7 +43,10 @@ expression(E) -->
         [endif],
         { E = if(R, TL, EL) }.
 expression(E) -->
-        relation(E).
+        relation(E),
+        !.
+expression(_) -->
+        { throw(parse_error) }.
 
 relation(R) -->
         simple_expression(E),
