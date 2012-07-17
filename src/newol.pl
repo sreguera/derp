@@ -18,6 +18,7 @@
 
 :- use_module(lexer).
 :- use_module(parser).
+:- use_module(sem).
 :- use_module(interp).
 
 :- multifile prolog_message//1.
@@ -30,6 +31,7 @@ prolog:message(parse_error(pos(L, C))) -->
 execute_source(Input, Output) :-
         lexer:scan(Input, Tokens),
         parser:parse(Tokens, AST),
+        sem:analyze(AST, _),
         interp:execute(AST, Output).
 
 execute_file(Input_File) :-
