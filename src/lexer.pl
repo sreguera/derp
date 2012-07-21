@@ -21,19 +21,27 @@ scan(Chars, Tokens) :-
 
 scan([], Pos, [token(Pos, eof, eof)]).
 scan([Char|Chars], Pos, Tokens) :-
-        separator(Char),
-        !,
+        (  separator(Char)
+        -> scan_separator(Char, Chars, Pos, Tokens)
+        ;  delimiter(Char)
+        -> scan_delimiter(Char, Chars, Pos, Tokens)
+        ;  identifier_start_char(Char)
+        -> scan_id(Char, Chars, Pos, Tokens)
+        ;  digit_char(Char)
+        -> scan_number(Char, Chars, Pos, Tokens)
+        ;  throw(unexpected_char(Char, Pos))
+        ).
+
+scan_separator(Char, Chars, Pos, Tokens) :-
         update_pos([Char], Pos, Pos1),
         scan(Chars, Pos1, Tokens).
-scan([Char|Chars], Pos, [token(Pos, Type, Type)|Tokens]) :-
-        delimiter(Char),
-        !,
+
+scan_delimiter(Char, Chars, Pos, [token(Pos, Type, Type)|Tokens]) :-
         atom_codes(Type, [Char]),
         update_pos([Char], Pos, Pos1),
         scan(Chars, Pos1, Tokens).
-scan([Char|Chars], Pos, [token(Pos, Type, Value)|Tokens]) :-
-        identifier_start_char(Char),
-        !,
+
+scan_id(Char, Chars, Pos, [token(Pos, Type, Value)|Tokens]) :-
         span(identifier_extend_char, Chars, Extend, RestChars),
         atom_codes(Identifier, [Char|Extend]),
         (  reserved_word(Identifier)
@@ -42,15 +50,29 @@ scan([Char|Chars], Pos, [token(Pos, Type, Value)|Tokens]) :-
         ),
         update_pos([Char|Extend], Pos, Pos1),
         scan(RestChars, Pos1, Tokens).
-scan([Char|Chars], Pos, [token(Pos, num, Number)|Tokens]) :-
-        digit_char(Char),
-        !,
+
+scan_number(Char, Chars, Pos, Tokens) :-
         span(digit_char, Chars, Extend, RestChars),
-        number_codes(Number, [Char|Extend]),
-        update_pos([Char|Extend], Pos, Pos1),
-        scan(RestChars, Pos1, Tokens).
-scan([Char|_], Pos, _) :-
-        throw(unexpected_char(Char, Pos)).
+        scan_number_aux(RestChars, [Char|Extend], Pos, Tokens).
+
+scan_number_aux([], NumChars, Pos, [token(Pos, num, Number)|Tokens]) :-
+        number_codes(Number, NumChars),
+        update_pos(NumChars, Pos, Pos1),
+        scan([], Pos1, Tokens).
+scan_number_aux([Char|Chars], NumChars, Pos, [Token|Tokens]) :-
+        (  Char = 0'.
+        -> span(digit_char, Chars, Extend, RestChars),
+           append([NumChars, [Char], Extend], RealChars), 
+           number_codes(Real, RealChars),
+           update_pos(RealChars, Pos, Pos1),
+           Token = token(Pos, real, Real),
+           scan(RestChars, Pos1, Tokens)
+        ;  number_codes(Number, NumChars),
+           update_pos(NumChars, Pos, Pos1),
+           Token = token(Pos, num, Number),
+           scan([Char|Chars], Pos1, Tokens)
+        ).
+
 
 end_of_line(0'\n). 
 
@@ -122,8 +144,9 @@ test(keywords) :-
               token(_, eof, eof)]).
 
 test(numbers) :-
-        scan("123 234",
-             [token(_, num, 123), token(_, num, 234), token(_, eof, eof)]).
+        scan("123 2.5 234",
+             [token(_, num, 123), token(_, real, 2.5), token(_, num, 234),
+              token(_, eof, eof)]).
 
 test(error, [throws(unexpected_char(0'!, pos(2, 5)))]) :-
         scan("\n123 !", _).
