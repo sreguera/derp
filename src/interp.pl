@@ -26,7 +26,8 @@ execute(if(C, T, E), V) :-
         -> execute(T, V)
         ;  execute(E, V)
         ).
-execute(num(N), N).
+execute(int(N), N).
+execute(real(N), N).
 execute(op(O, E1, E2), V) :-
         execute(E1, V1),
         execute(E2, V2),
@@ -42,16 +43,16 @@ exec_op('<', V1, V2, V) :-
 
 :- begin_tests(interp).
 
-test(num) :-
-        execute(num(5), 5).
+test(int) :-
+        execute(int(5), 5).
 
 test(add) :-
-        execute(op('+', num(1), num(2)), 3).
+        execute(op('+', int(1), int(2)), 3).
 
 test(gt) :-
-        execute(op('<', num(1), num(2)), true).
+        execute(op('<', int(1), int(2)), true).
 
 test(if) :-
-        execute(if(op('<', num(1), num(2)), num(3), num(4)), 3).
+        execute(if(op('<', int(1), int(2)), int(3), int(4)), 3).
 
 :- end_tests(interp).

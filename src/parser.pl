@@ -89,8 +89,11 @@ term_aux(T0, T) -->
 term_aux(T, T) -->
         [].
 
-primary(num(N)) -->
-        [token(_, num, N)],
+primary(int(N)) -->
+        [token(_, int, N)],
+        !.
+primary(real(N)) -->
+        [token(_, real, N)],
         !.
 primary(E) -->
         [token(_, '(', _)],
@@ -115,49 +118,49 @@ expect(_) -->
 :- begin_tests(parser).
 
 test(basic) :-
-        parse([token(_, num, 1), token(_, eof, eof)], num(1)).
+        parse([token(_, int, 1), token(_, eof, eof)], int(1)).
 
 test(if) :-
         parse([token(_, if, _),
-               token(_, num, 1), token(_, '<', _), token(_, num, 2),
-               token(_, then, _), token(_, num, 1),
-               token(_, else, _), token(_, num, 2),
+               token(_, int, 1), token(_, '<', _), token(_, int, 2),
+               token(_, then, _), token(_, int, 1),
+               token(_, else, _), token(_, int, 2),
                token(_, endif, _), token(_, eof, eof)],
-              if(op('<', num(1), num(2)), num(1), num(2))).
+              if(op('<', int(1), int(2)), int(1), int(2))).
 
 test(seq) :-
-        parse([token(_, num, 1), token(_, ';', _), token(_, num, 2),
+        parse([token(_, int, 1), token(_, ';', _), token(_, int, 2),
                token(_, eof, eof)],
-              seq(num(1), num(2))).
+              seq(int(1), int(2))).
 
 test(seq2) :-
-        parse([token(_, num, 1), token(_, '+', _), token(_, num, 2),
-               token(_, ';', _), token(_, num, 3), token(_, eof, eof)],
-              seq(op('+', num(1), num(2)), num(3))).
+        parse([token(_, int, 1), token(_, '+', _), token(_, int, 2),
+               token(_, ';', _), token(_, int, 3), token(_, eof, eof)],
+              seq(op('+', int(1), int(2)), int(3))).
 
 test(gt) :-
-        parse([token(_, num, 1), token(_, '<', _), token(_, num, 2),
+        parse([token(_, int, 1), token(_, '<', _), token(_, int, 2),
                token(_, eof, eof)],
-              op('<', num(1), num(2))).
+              op('<', int(1), int(2))).
 
 test(add) :-
-        parse([token(_, num, 1), token(_, '+', _), token(_, num, 2),
+        parse([token(_, int, 1), token(_, '+', _), token(_, int, 2),
                token(_, eof, eof)],
-              op('+', num(1), num(2))).
+              op('+', int(1), int(2))).
 
 test(mul) :-
-        parse([token(_, num, 1), token(_, '*', _), token(_, num, 2),
+        parse([token(_, int, 1), token(_, '*', _), token(_, int, 2),
                token(_, eof, eof)],
-              op('*', num(1), num(2))).
+              op('*', int(1), int(2))).
 
 test(addadd) :-
-        parse([token(_, num, 1), token(_, '+', _), token(_, num, 2),
-               token(_, '+', _), token(_, num, 3), token(_, eof, eof)],
-              op('+', op('+', num(1), num(2)), num(3))).
+        parse([token(_, int, 1), token(_, '+', _), token(_, int, 2),
+               token(_, '+', _), token(_, int, 3), token(_, eof, eof)],
+              op('+', op('+', int(1), int(2)), int(3))).
 
 test(addmul) :-
-        parse([token(_, num, 1), token(_, '+', _), token(_, num, 2),
-               token(_, '*', _), token(_, num, 3), token(_, eof, eof)],
-              op('+', num(1), op('*', num(2), num(3)))).
+        parse([token(_, int, 1), token(_, '+', _), token(_, int, 2),
+               token(_, '*', _), token(_, int, 3), token(_, eof, eof)],
+              op('+', int(1), op('*', int(2), int(3)))).
 
 :- end_tests(parser).

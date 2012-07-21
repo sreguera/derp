@@ -55,7 +55,7 @@ scan_number(Char, Chars, Pos, Tokens) :-
         span(digit_char, Chars, Extend, RestChars),
         scan_number_aux(RestChars, [Char|Extend], Pos, Tokens).
 
-scan_number_aux([], NumChars, Pos, [token(Pos, num, Number)|Tokens]) :-
+scan_number_aux([], NumChars, Pos, [token(Pos, int, Number)|Tokens]) :-
         number_codes(Number, NumChars),
         update_pos(NumChars, Pos, Pos1),
         scan([], Pos1, Tokens).
@@ -69,7 +69,7 @@ scan_number_aux([Char|Chars], NumChars, Pos, [Token|Tokens]) :-
            scan(RestChars, Pos1, Tokens)
         ;  number_codes(Number, NumChars),
            update_pos(NumChars, Pos, Pos1),
-           Token = token(Pos, num, Number),
+           Token = token(Pos, int, Number),
            scan([Char|Chars], Pos1, Tokens)
         ).
 
@@ -145,7 +145,7 @@ test(keywords) :-
 
 test(numbers) :-
         scan("123 2.5 234",
-             [token(_, num, 123), token(_, real, 2.5), token(_, num, 234),
+             [token(_, int, 123), token(_, real, 2.5), token(_, int, 234),
               token(_, eof, eof)]).
 
 test(error, [throws(unexpected_char(0'!, pos(2, 5)))]) :-

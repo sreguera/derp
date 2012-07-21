@@ -31,7 +31,8 @@ analyze(if(C, E1, E2), T) :-
         -> T1 = T
         ;  throw(invalid_type)
         ).
-analyze(num(_), num).
+analyze(int(_), int).
+analyze(real(_), real).
 analyze(op(O, E1, E2), T) :-
         analyze(E1, T1),
         analyze(E2, T2),
@@ -40,6 +41,9 @@ analyze(op(O, E1, E2), T) :-
         ;  throw(invalid_op)
         ).
 
-op('+', num, num, num).
-op('*', num, num, num).
-op('<', num, num, bool).
+op('+', int, int, int).
+op('+', real, real, real).
+op('*', int, int, int).
+op('*', real, real, real).
+op('<', int, int, bool).
+op('<', real, real, bool).
