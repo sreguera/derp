@@ -16,6 +16,7 @@
 */
 :- module(sem, [analyze/2]).
 
+:- use_module(db).
 
 analyze(seq(E1, E2), T) :-
         analyze(E1, _),
@@ -33,6 +34,8 @@ analyze(if(C, E1, E2), T) :-
         ).
 analyze(int(_), int).
 analyze(real(_), real).
+analyze(param(Name), Type) :-
+        db:pardef(Name, Type).
 analyze(op(O, E1, E2), T) :-
         analyze(E1, T1),
         analyze(E2, T2),

@@ -95,6 +95,9 @@ primary(int(N)) -->
 primary(real(N)) -->
         [token(_, real, N)],
         !.
+primary(param(Name)) -->
+        [token(_, id, Name)],
+        !.
 primary(E) -->
         [token(_, '(', _)],
         !,
@@ -119,6 +122,9 @@ expect(_) -->
 
 test(basic) :-
         parse([token(_, int, 1), token(_, eof, eof)], int(1)).
+
+test(param) :-
+        parse([token(_, id, 'A001'), token(_, eof, eof)], param('A001')).
 
 test(if) :-
         parse([token(_, if, _),
