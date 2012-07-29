@@ -90,7 +90,7 @@ delimiter(0'<).
 delimiter(0';).
 delimiter(0'().
 delimiter(0')).
-
+delimiter(0'=).
 
 identifier_start_char(C) :-
         code_type(C, alpha).
@@ -106,6 +106,7 @@ reserved_word(if).
 reserved_word(then).
 reserved_word(else).
 reserved_word(endif).
+reserved_word(let).
 
 
 update_pos([], pos(L, C), pos(L, C)).

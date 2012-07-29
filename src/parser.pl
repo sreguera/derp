@@ -25,17 +25,26 @@ definition(P) -->
         expect(eof).
         
 expression_list(L) -->
-        expression(E),
+        top_expression(E),
         expression_list_aux(E, L).
 
 expression_list_aux(E0, L) -->
         [token(_, ';', _)],
         !,
-        expression(E),
+        top_expression(E),
         expression_list_aux(seq(E0, E), L).
 expression_list_aux(E, E) -->
         [].
 
+top_expression(E) -->
+        [token(_, let, _)],
+        !,
+        [token(_, id, Name), token(_, '=', _)],
+        expression(V),
+        { E = let(Name, V) }.
+top_expression(E) -->
+        expression(E).
+        
 expression(E) -->
         [token(_, if, _)],
         !,
@@ -95,7 +104,7 @@ primary(int(N)) -->
 primary(real(N)) -->
         [token(_, real, N)],
         !.
-primary(param(Name)) -->
+primary(value(Name)) -->
         [token(_, id, Name)],
         !.
 primary(E) -->
@@ -124,7 +133,13 @@ test(basic) :-
         parse([token(_, int, 1), token(_, eof, eof)], int(1)).
 
 test(param) :-
-        parse([token(_, id, 'A001'), token(_, eof, eof)], param('A001')).
+        parse([token(_, id, 'A001'), token(_, eof, eof)], value('A001')).
+
+test(let) :-
+        parse([token(_, let, _), token(_, id, 'a'), token(_, '=', _),
+               token(_, int, 1), token(_, '+', _), token(_, int, 2),
+               token(_, eof, eof)],
+              let('a', op('+', int(1), int(2)))).
 
 test(if) :-
         parse([token(_, if, _),

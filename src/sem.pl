@@ -18,27 +18,40 @@
 
 :- use_module(db).
 
-analyze(seq(E1, E2), T) :-
-        analyze(E1, _),
-        analyze(E2, T).
-analyze(if(C, E1, E2), T) :-
-        analyze(C, CT),
+analyze(AST, AST2) :-
+        empty_context(Env),
+        analyze(AST, Env, _, _, AST2).
+
+analyze(seq(E1, E2), Env0, Env, T, seq(E11, E22)) :-
+        analyze(E1, Env0, Env1, _, E11),
+        analyze(E2, Env1, Env, T, E22).
+analyze(let(Name, E), Env0, Env, T, let(Name, E1)) :-
+        analyze(E, Env0, _, T, E1),
+        push_entry(Env0, Name, T, Env).
+analyze(if(C, E1, E2), Env, Env, T, if(C1, E11, E22)) :-
+        analyze(C, Env, _, CT, C1),
         (  CT = bool
         ;  throw(invalid_cond)
         ),
-        analyze(E1, T1),
-        analyze(E2, T2),
+        push_frame(Env, Env1),
+        analyze(E1, Env1, _, T1, E11),
+        analyze(E2, Env1, _, T2, E22),
         (  T1 = T2
         -> T1 = T
         ;  throw(invalid_type)
         ).
-analyze(int(_), int).
-analyze(real(_), real).
-analyze(param(Name), Type) :-
-        db:pardef(Name, Type).
-analyze(op(O, E1, E2), T) :-
-        analyze(E1, T1),
-        analyze(E2, T2),
+analyze(int(X), Env, Env, int, int(X)).
+analyze(real(X), Env, Env, real, real(X)).
+analyze(value(Name), Env, Env, Type, Result) :-
+        (  lookup_name(Env, Name, Type)
+        -> Result = var(Name)
+        ;  db:pardef(Name, Type)
+        -> Result = param(Name)
+        ;  throw(unknown_id)
+        ).
+analyze(op(O, E1, E2), Env, Env, T, op(O, E11, E22)) :-
+        analyze(E1, Env, _, T1, E11),
+        analyze(E2, Env, _, T2, E22),
         (  op(O, T1, T2, TR)
         -> T = TR
         ;  throw(invalid_op)
@@ -50,3 +63,15 @@ op('*', int, int, int).
 op('*', real, real, real).
 op('<', int, int, bool).
 op('<', real, real, bool).
+
+
+empty_context([[]]).
+
+push_frame(C, [[]|C]).
+
+push_entry([F|C], Name, Type, [[entry(Name, Type)|F]|C]).
+
+lookup_name([F|_], Name, Type) :-
+        memberchk(entry(Name, Type), F), !.
+lookup_name([_|C], Name, Type) :-
+        lookup_name(C, Name, Type).
