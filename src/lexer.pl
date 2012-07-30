@@ -87,7 +87,6 @@ separator(0'\ ).
 delimiter(0'*).
 delimiter(0'+).
 delimiter(0'<).
-delimiter(0';).
 delimiter(0'().
 delimiter(0')).
 delimiter(0'=).
@@ -107,6 +106,7 @@ reserved_word(then).
 reserved_word(else).
 reserved_word(endif).
 reserved_word(let).
+reserved_word(in).
 
 
 update_pos([], pos(L, C), pos(L, C)).

@@ -19,31 +19,26 @@
 :- use_module(tm).
 
 execute(Exp, Res) :-
-        empty_context(Env),
-        execute(Exp, Env, _, Res).
+        execute(Exp, [], Res).
         
-execute(seq(E1, E2), Env0, Env, V) :-
-        execute(E1, Env0, Env1, _V1),
-        execute(E2, Env1, Env, V2),
-        V = V2.
-execute(let(Name, E), Env0, Env, V) :-
-       execute(E, Env0, _, V),
-       push_entry(Env0, Name, V, Env).
-execute(if(C, T, E), Env, Env, V) :-
-        execute(C, Env, _, CV),
+execute(let(Name, Val, E), Env, V) :-
+       execute(Val, Env, VV),
+       execute(E, [entry(Name, VV)|Env], V).
+execute(if(C, T, E), Env, V) :-
+        execute(C, Env, CV),
         (  CV = true
-        -> push_frame(Env, Env1), execute(T, Env1, _, V)
-        ;  push_frame(Env, Env1), execute(E, Env1, _, V)
+        -> execute(T, Env, V)
+        ;  execute(E, Env, V)
         ).
-execute(int(N), Env, Env, N).
-execute(real(N), Env, Env, N).
-execute(param(Name), Env, Env, V) :-
+execute(int(N), _, N).
+execute(real(N), _, N).
+execute(param(Name), _, V) :-
         tm:parval(Name, V).
-execute(var(Name), Env, Env, V) :-
-        lookup_name(Env, Name, V).
-execute(op(O, E1, E2), Env, Env, V) :-
-        execute(E1, Env, _, V1),
-        execute(E2, Env, _, V2),
+execute(var(Name), Env, V) :-
+        memberchk(entry(Name, V), Env).
+execute(op(O, E1, E2), Env, V) :-
+        execute(E1, Env, V1),
+        execute(E2, Env, V2),
         exec_op(O, V1, V2, V).
 
 exec_op('+', V1, V2, V) :-
@@ -52,21 +47,6 @@ exec_op('*', V1, V2, V) :-
         V is V1 * V2.
 exec_op('<', V1, V2, V) :-
         ( V1 < V2 -> V = true ; V = false ).
-
-
-
-empty_context([[]]).
-
-push_frame(C, [[]|C]).
-
-push_entry([F|C], Name, Type, [[entry(Name, Type)|F]|C]).
-
-lookup_name([F|_], Name, Type) :-
-        memberchk(entry(Name, Type), F), !.
-lookup_name([_|C], Name, Type) :-
-        lookup_name(C, Name, Type).
-
-
 
 :- begin_tests(interp).
 

@@ -21,38 +21,25 @@ parse(Tokens, AST) :-
         phrase(definition(AST), Tokens).
 
 definition(P) -->
-        expression_list(P),
+        expression(P),
         expect(eof).
         
-expression_list(L) -->
-        top_expression(E),
-        expression_list_aux(E, L).
-
-expression_list_aux(E0, L) -->
-        [token(_, ';', _)],
-        !,
-        top_expression(E),
-        expression_list_aux(seq(E0, E), L).
-expression_list_aux(E, E) -->
-        [].
-
-top_expression(E) -->
+expression(E) -->
         [token(_, let, _)],
         !,
         [token(_, id, Name), token(_, '=', _)],
         expression(V),
-        { E = let(Name, V) }.
-top_expression(E) -->
-        expression(E).
-        
+        [token(_, in, _)],        
+        expression(Z),
+        { E = let(Name, V, Z) }.        
 expression(E) -->
         [token(_, if, _)],
         !,
         expression(R),
         expect(then),
-        expression_list(TL),
+        expression(TL),
         expect(else),
-        expression_list(EL),
+        expression(EL),
         expect(endif),
         { E = if(R, TL, EL) }.
 expression(E) -->
@@ -138,8 +125,9 @@ test(param) :-
 test(let) :-
         parse([token(_, let, _), token(_, id, 'a'), token(_, '=', _),
                token(_, int, 1), token(_, '+', _), token(_, int, 2),
+               token(_, in, _),  token(_, id, 'a'),
                token(_, eof, eof)],
-              let('a', op('+', int(1), int(2)))).
+              let('a', op('+', int(1), int(2)), value('a'))).
 
 test(if) :-
         parse([token(_, if, _),
@@ -148,16 +136,6 @@ test(if) :-
                token(_, else, _), token(_, int, 2),
                token(_, endif, _), token(_, eof, eof)],
               if(op('<', int(1), int(2)), int(1), int(2))).
-
-test(seq) :-
-        parse([token(_, int, 1), token(_, ';', _), token(_, int, 2),
-               token(_, eof, eof)],
-              seq(int(1), int(2))).
-
-test(seq2) :-
-        parse([token(_, int, 1), token(_, '+', _), token(_, int, 2),
-               token(_, ';', _), token(_, int, 3), token(_, eof, eof)],
-              seq(op('+', int(1), int(2)), int(3))).
 
 test(gt) :-
         parse([token(_, int, 1), token(_, '<', _), token(_, int, 2),
