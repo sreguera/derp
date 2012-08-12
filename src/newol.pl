@@ -58,3 +58,38 @@ run :-
 parse_args([], [], []).
 parse_args([Arg|Args], Opts, [Arg|PosArgs]) :-
         parse_args(Args, Opts, PosArgs).
+
+:- begin_tests(newol).
+
+test(lexer_error, [throws(unexpected_char(0'!, _))]) :-
+        execute_source("!", _).
+
+test(parser_error, [throws(parse_error(_))]) :-
+        execute_source("if if", _).
+
+test(invalid_cond, [throws(invalid_cond)]) :-
+        execute_source("if 1 then 1 else 2 endif", _).
+
+test(invalid_type, [throws(invalid_type)]) :-
+        execute_source("if 1 < 2 then 1 else 1.0 endif", _).
+
+test(unknown_id, [throws(unknown_id)]) :-
+        execute_source("foo", _).
+
+test(invalid_op, [throws(invalid_op)]) :-
+        execute_source("1.0 + 1", _).
+
+test(int) :-
+        execute_source("5", 5),
+        execute_source("4+5", 9),
+        execute_source("4*5", 20).
+
+test(real) :-
+        execute_source("5.0", 5.0),
+        execute_source("4.0+5.0", 9.0),
+        execute_source("4.0*5.0", 20.0).
+
+test(if) :-
+        execute_source("if 1 < 2 then 3 else 4 endif", 3).
+
+:- end_tests(newol).
