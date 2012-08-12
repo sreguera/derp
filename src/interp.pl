@@ -77,12 +77,12 @@ test(param) :-
         execute(param('A001'), 5).
 
 test(add) :-
-        execute(op('+', int(1), int(2)), 3).
+        execute(op(iadd, int(1), int(2)), 3).
 
 test(gt) :-
-        execute(op('<', int(1), int(2)), true).
+        execute(op(ilt, int(1), int(2)), true).
 
 test(if) :-
-        execute(if(op('<', int(1), int(2)), int(3), int(4)), 3).
+        execute(if(op(ilt, int(1), int(2)), int(3), int(4)), 3).
 
 :- end_tests(interp).

@@ -76,14 +76,14 @@ op('<', real, real, bool, rlt).
 
 test(add) :-
         analyze(op('+', real(10.0), real(7.0)),
-                op('+', real(10.0), real(7.0))).
+                op(radd, real(10.0), real(7.0))).
         
 test(if) :-
         analyze(if(op('<', int(1), int(2)),
                    op('+', real(10.0), real(7.0)),
                    real(5.0)),
-                if(op('<', int(1), int(2)),
-                   op('+', real(10.0), real(7.0)),
+                if(op(ilt, int(1), int(2)),
+                   op(radd, real(10.0), real(7.0)),
                    real(5.0))).
 
 :- end_tests(sem).
