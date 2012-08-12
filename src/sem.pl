@@ -14,9 +14,17 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 :- module(sem, [analyze/2]).
 
 :- use_module(db).
+
+/** <module> Semantic Analyzer
+
+This module provides operations for converting an AST to a checked
+AST.
+
+*/
 
 analyze(AST, AST2) :-
         analyze(AST, [], _, AST2).

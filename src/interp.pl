@@ -18,6 +18,12 @@
 
 :- use_module(tm).
 
+/** <module> Interpreter
+
+This module provides operations for interpreting an AST.
+
+*/
+
 execute(Exp, Res) :-
         execute(Exp, [], Res).
         

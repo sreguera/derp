@@ -14,7 +14,15 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 :- module(lexer, [scan/2]).
+
+/** <module> Lexer
+
+This module provides operations for converting a list of character
+codes to a list of tokens.
+
+*/
 
 scan(Chars, Tokens) :-
         scan(Chars, pos(1, 1), Tokens).
@@ -62,7 +70,7 @@ scan_number_aux([], NumChars, Pos, [token(Pos, int, Number)|Tokens]) :-
 scan_number_aux([Char|Chars], NumChars, Pos, [Token|Tokens]) :-
         (  Char = 0'.
         -> span(digit_char, Chars, Extend, RestChars),
-           append([NumChars, [Char], Extend], RealChars), 
+           append([NumChars, [Char], Extend], RealChars),
            number_codes(Real, RealChars),
            update_pos(RealChars, Pos, Pos1),
            Token = token(Pos, real, Real),
@@ -74,7 +82,7 @@ scan_number_aux([Char|Chars], NumChars, Pos, [Token|Tokens]) :-
         ).
 
 
-end_of_line(0'\n). 
+end_of_line(0'\n).
 
 separator(0'\t).
 separator(0'\n).
