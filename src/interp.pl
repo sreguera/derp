@@ -47,11 +47,25 @@ execute(op(O, E1, E2), Env, V) :-
         execute(E2, Env, V2),
         exec_op(O, V1, V2, V).
 
-exec_op('+', V1, V2, V) :-
+exec_op(iadd, V1, V2, V) :-
         V is V1 + V2.
-exec_op('*', V1, V2, V) :-
+exec_op(radd, V1, V2, V) :-
+        V is V1 + V2.
+exec_op(isub, V1, V2, V) :-
+        V is V1 - V2.
+exec_op(rsub, V1, V2, V) :-
+        V is V1 - V2.
+exec_op(imul, V1, V2, V) :-
         V is V1 * V2.
-exec_op('<', V1, V2, V) :-
+exec_op(rmul, V1, V2, V) :-
+        V is V1 * V2.
+exec_op(idiv, V1, V2, V) :-
+        V is div(V1, V2).
+exec_op(rdiv, V1, V2, V) :-
+        V is V1 / V2.
+exec_op(ilt, V1, V2, V) :-
+        ( V1 < V2 -> V = true ; V = false ).
+exec_op(rlt, V1, V2, V) :-
         ( V1 < V2 -> V = true ; V = false ).
 
 :- begin_tests(interp).

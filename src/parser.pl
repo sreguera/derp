@@ -110,8 +110,10 @@ primary(E) -->
 relational_operator('<') --> [token(_, '<', _)].
 
 binary_adding_operator('+') --> [token(_, '+', _)].
+binary_adding_operator('-') --> [token(_, '-', _)].
 
 multiplying_operator('*') --> [token(_, '*', _)].
+multiplying_operator('/') --> [token(_, '/', _)].
 
 expect(E) -->
         [token(_, E, _)],

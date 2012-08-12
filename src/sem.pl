@@ -52,20 +52,24 @@ analyze(value(Name), Env, Type, Result) :-
         -> Result = param(Name)
         ;  throw(unknown_id)
         ).
-analyze(op(O, E1, E2), Env, T, op(O, E11, E22)) :-
+analyze(op(O, E1, E2), Env, T, op(OO, E11, E22)) :-
         analyze(E1, Env, T1, E11),
         analyze(E2, Env, T2, E22),
-        (  op(O, T1, T2, TR)
-        -> T = TR
+        (  op(O, T1, T2, TR, Op)
+        -> T = TR, OO = Op
         ;  throw(invalid_op)
         ).
 
-op('+', int, int, int).
-op('+', real, real, real).
-op('*', int, int, int).
-op('*', real, real, real).
-op('<', int, int, bool).
-op('<', real, real, bool).
+op('+', int, int, int, iadd).
+op('+', real, real, real, radd).
+op('-', int, int, int, isub).
+op('-', real, real, real, rsub).
+op('*', int, int, int, imul).
+op('*', real, real, real, rmul).
+op('/', int, int, int, idiv).
+op('/', real, real, real, rdiv).
+op('<', int, int, bool, ilt).
+op('<', real, real, bool, rlt).
 
 
 :- begin_tests(sem).

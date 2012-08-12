@@ -93,7 +93,9 @@ separator(0'\ ).
 
 
 delimiter(0'*).
+delimiter(0'/).
 delimiter(0'+).
+delimiter(0'-).
 delimiter(0'<).
 delimiter(0'().
 delimiter(0')).
