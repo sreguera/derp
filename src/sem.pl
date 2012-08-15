@@ -72,6 +72,8 @@ op('<', int, int, bool, ilt).
 op('<', real, real, bool, rlt).
 op('>', int, int, bool, igt).
 op('>', real, real, bool, rgt).
+op('=', int, int, bool, ieq).
+op('=', real, real, bool, req).
 
 
 :- begin_tests(sem).
