@@ -70,6 +70,8 @@ op('/', int, int, int, idiv).
 op('/', real, real, real, rdiv).
 op('<', int, int, bool, ilt).
 op('<', real, real, bool, rlt).
+op('>', int, int, bool, igt).
+op('>', real, real, bool, rgt).
 
 
 :- begin_tests(sem).

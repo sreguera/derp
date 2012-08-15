@@ -89,6 +89,11 @@ test(real) :-
         execute_source("4.0+5.0", 9.0),
         execute_source("4.0*5.0", 20.0).
 
+test(comp) :-
+        execute_source("1 > 2", false),
+        execute_source("1 < 2", true).
+        
+
 test(if) :-
         execute_source("if 1 < 2 then 3 else 4 endif", 3).
 

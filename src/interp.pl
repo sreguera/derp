@@ -67,6 +67,10 @@ exec_op(ilt, V1, V2, V) :-
         ( V1 < V2 -> V = true ; V = false ).
 exec_op(rlt, V1, V2, V) :-
         ( V1 < V2 -> V = true ; V = false ).
+exec_op(igt, V1, V2, V) :-
+        ( V1 > V2 -> V = true ; V = false ).
+exec_op(rgt, V1, V2, V) :-
+        ( V1 > V2 -> V = true ; V = false ).
 
 :- begin_tests(interp).
 
