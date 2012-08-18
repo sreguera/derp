@@ -24,6 +24,28 @@
 This module provides operations for converting an AST to a checked
 AST.
 
+  type expression ---> let(name :: atom,
+                           value :: expression,
+                           body :: expression)
+                     ; if(condition :: expression,
+                          then :: expression,
+                          else :: expression)
+                     ; op(operator,
+                          left :: expression,
+                          right :: expression)
+                     ; int(value :: integer)
+                     ; real(value :: float)
+                     ; var(name :: atom)
+                     ; param(name :: atom)
+
+  type operator ---> imul ; rmul
+                   ; idiv ; rdiv
+                   ; iadd ; radd
+                   ; isub ; rsub
+                   ; ilt ; rlt
+                   ; igt ; rgt
+                   ; ieq ; req
+
 */
 
 analyze(AST, AST2) :-
