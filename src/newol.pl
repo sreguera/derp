@@ -93,6 +93,9 @@ test(comp) :-
         execute_source("1 > 2", false),
         execute_source("1 < 2", true).
         
+test(fun) :-
+        execute_source("sin(0.0)", 0.0),
+        execute_source("cos(0.0)", 1.0).
 
 test(if) :-
         execute_source("if 1 < 2 then 3 else 4 endif", 3).

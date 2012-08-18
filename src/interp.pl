@@ -46,6 +46,16 @@ execute(op(O, E1, E2), Env, V) :-
         execute(E1, Env, V1),
         execute(E2, Env, V2),
         exec_op(O, V1, V2, V).
+execute(fun(Name, E), Env, V) :-
+        execute(E, Env, V1),
+        exec_fun(Name, V1, V).
+
+exec_fun(sin, V1, V) :-
+        V is sin(V1).
+exec_fun(cos, V1, V) :-
+        V is cos(V1).
+exec_fun(tan, V1, V) :-
+        V is tan(V1).
 
 exec_op(iadd, V1, V2, V) :-
         V is V1 + V2.

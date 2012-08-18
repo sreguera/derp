@@ -33,6 +33,8 @@ AST.
                      ; op(operator,
                           left :: expression,
                           right :: expression)
+                     ; fun(name :: fname,
+                           argument :: expression)
                      ; int(value :: integer)
                      ; real(value :: float)
                      ; var(name :: atom)
@@ -45,6 +47,8 @@ AST.
                    ; ilt ; rlt
                    ; igt ; rgt
                    ; ieq ; req
+
+  type fname ---> sin ; cos ; tan
 
 */
 
@@ -81,6 +85,16 @@ analyze(op(O, E1, E2), Env, T, op(OO, E11, E22)) :-
         -> T = TR, OO = Op
         ;  throw(invalid_op)
         ).
+analyze(fun(Name, E), Env, T, fun(Name, E1)) :-
+        analyze(E, Env, T1, E1),
+        (  fun(Name, T1, T)
+        -> !
+        ;  throw(invalid_op)
+        ).
+
+fun('sin', real, real).
+fun('cos', real, real).
+fun('tan', real, real).
 
 op('+', int, int, int, iadd).
 op('+', real, real, real, radd).

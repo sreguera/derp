@@ -31,6 +31,8 @@ AST.
                      ; op(operator,
                           left :: expression,
                           right :: expression)
+                     ; fun(name :: atom,
+                           argument :: expression)
                      ; int(value :: integer)
                      ; real(value :: float)
                      ; value(name :: atom)
@@ -113,14 +115,25 @@ primary(int(N)) -->
 primary(real(N)) -->
         [token(_, real(N))],
         !.
-primary(value(Name)) -->
+primary(P) -->
         [token(_, id(Name))],
-        !.
+        !,
+        (  arguments(A)
+        -> { P = fun(Name, A) }
+        ;  { P = value(Name) }
+        ).
 primary(E) -->
         [token(_, '(')],
         !,
         expression(E),
         expect(')').
+
+arguments(A) -->
+        [token(_, '(')],
+        expression(A),
+        [token(_, ')')].
+        
+
 
 relational_operator('<') --> [token(_, '<')].
 relational_operator('>') --> [token(_, '>')].
