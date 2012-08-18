@@ -22,12 +22,22 @@
 This module provides operations for converting a list of character
 codes to a list of tokens.
 
+  type token ---> token(position, contents)
+
+  type position ---> position(line :: integer, column :: integer)
+
+  type contents ---> int(value :: integer)
+                   ; real(value :: float)
+                   ; id(value :: atom)
+                   ; * ; / ; + ; - ; < ; > ; = ; ( ; ) 
+                   ; if ; then ; else ; endif ; let ; in
+  
 */
 
 scan(Chars, Tokens) :-
         scan(Chars, pos(1, 1), Tokens).
 
-scan([], Pos, [token(Pos, eof, eof)]).
+scan([], Pos, [token(Pos, eof)]).
 scan([Char|Chars], Pos, Tokens) :-
         (  separator(Char)
         -> scan_separator(Char, Chars, Pos, Tokens)
@@ -44,17 +54,17 @@ scan_separator(Char, Chars, Pos, Tokens) :-
         update_pos([Char], Pos, Pos1),
         scan(Chars, Pos1, Tokens).
 
-scan_delimiter(Char, Chars, Pos, [token(Pos, Type, Type)|Tokens]) :-
-        atom_codes(Type, [Char]),
+scan_delimiter(Char, Chars, Pos, [token(Pos, Contents)|Tokens]) :-
+        atom_codes(Contents, [Char]),
         update_pos([Char], Pos, Pos1),
         scan(Chars, Pos1, Tokens).
 
-scan_id(Char, Chars, Pos, [token(Pos, Type, Value)|Tokens]) :-
+scan_id(Char, Chars, Pos, [token(Pos, Contents)|Tokens]) :-
         span(identifier_extend_char, Chars, Extend, RestChars),
         atom_codes(Identifier, [Char|Extend]),
         (  reserved_word(Identifier)
-        -> Type = Identifier, Value = Identifier
-        ;  Type = id, Value = Identifier
+        -> Contents = Identifier
+        ;  Contents = id(Identifier)
         ),
         update_pos([Char|Extend], Pos, Pos1),
         scan(RestChars, Pos1, Tokens).
@@ -63,21 +73,22 @@ scan_number(Char, Chars, Pos, Tokens) :-
         span(digit_char, Chars, Extend, RestChars),
         scan_number_aux(RestChars, [Char|Extend], Pos, Tokens).
 
-scan_number_aux([], NumChars, Pos, [token(Pos, int, Number)|Tokens]) :-
+scan_number_aux([], NumChars, Pos, [token(Pos, int(Number))|Tokens]) :-
         number_codes(Number, NumChars),
         update_pos(NumChars, Pos, Pos1),
         scan([], Pos1, Tokens).
 scan_number_aux([Char|Chars], NumChars, Pos, [Token|Tokens]) :-
         (  Char = 0'.
         -> span(digit_char, Chars, Extend, RestChars),
+           % TODO Should "2." be 2.0 or an error?
            append([NumChars, [Char], Extend], RealChars),
            number_codes(Real, RealChars),
            update_pos(RealChars, Pos, Pos1),
-           Token = token(Pos, real, Real),
+           Token = token(Pos, real(Real)),
            scan(RestChars, Pos1, Tokens)
         ;  number_codes(Number, NumChars),
            update_pos(NumChars, Pos, Pos1),
-           Token = token(Pos, int, Number),
+           Token = token(Pos, int(Number)),
            scan([Char|Chars], Pos1, Tokens)
         ).
 
@@ -146,19 +157,19 @@ test(pos) :-
 
 test(delimiters) :-
         scan("+*<",
-             [token(_, '+', '+'), token(_, '*', '*'), token(_, '<', '<'),
-              token(_, eof, eof)]).
+             [token(_, '+'), token(_, '*'), token(_, '<'),
+              token(_, eof)]).
 
 test(keywords) :-
         scan("if then else endif",
-             [token(_, if, if), token(_, then, then),
-              token(_, else, else), token(_, endif, endif),
-              token(_, eof, eof)]).
+             [token(_, if), token(_, then),
+              token(_, else), token(_, endif),
+              token(_, eof)]).
 
 test(numbers) :-
         scan("123 2.5 234",
-             [token(_, int, 123), token(_, real, 2.5), token(_, int, 234),
-              token(_, eof, eof)]).
+             [token(_, int(123)), token(_, real(2.5)), token(_, int(234)),
+              token(_, eof)]).
 
 test(error, [throws(unexpected_char(0'!, pos(2, 5)))]) :-
         scan("\n123 !", _).

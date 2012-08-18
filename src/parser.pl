@@ -32,15 +32,15 @@ definition(P) -->
         expect(eof).
         
 expression(E) -->
-        [token(_, let, _)],
+        [token(_, let)],
         !,
-        [token(_, id, Name), token(_, '=', _)],
+        [token(_, id(Name)), token(_, '=')],
         expression(V),
-        [token(_, in, _)],        
+        [token(_, in)],        
         expression(Z),
         { E = let(Name, V, Z) }.        
 expression(E) -->
-        [token(_, if, _)],
+        [token(_, if)],
         !,
         expression(R),
         expect(then),
@@ -53,7 +53,7 @@ expression(E) -->
         relation(E),
         !.
 expression(_) -->
-        [token(Pos, _, _)],
+        [token(Pos, _)],
         { throw(parse_error(Pos)) }.
 
 relation(R) -->
@@ -93,84 +93,84 @@ term_aux(T, T) -->
         [].
 
 primary(int(N)) -->
-        [token(_, int, N)],
+        [token(_, int(N))],
         !.
 primary(real(N)) -->
-        [token(_, real, N)],
+        [token(_, real(N))],
         !.
 primary(value(Name)) -->
-        [token(_, id, Name)],
+        [token(_, id(Name))],
         !.
 primary(E) -->
-        [token(_, '(', _)],
+        [token(_, '(')],
         !,
         expression(E),
         expect(')').
 
-relational_operator('<') --> [token(_, '<', _)].
-relational_operator('>') --> [token(_, '>', _)].
-relational_operator('=') --> [token(_, '=', _)].
+relational_operator('<') --> [token(_, '<')].
+relational_operator('>') --> [token(_, '>')].
+relational_operator('=') --> [token(_, '=')].
 
-binary_adding_operator('+') --> [token(_, '+', _)].
-binary_adding_operator('-') --> [token(_, '-', _)].
+binary_adding_operator('+') --> [token(_, '+')].
+binary_adding_operator('-') --> [token(_, '-')].
 
-multiplying_operator('*') --> [token(_, '*', _)].
-multiplying_operator('/') --> [token(_, '/', _)].
+multiplying_operator('*') --> [token(_, '*')].
+multiplying_operator('/') --> [token(_, '/')].
 
 expect(E) -->
-        [token(_, E, _)],
+        [token(_, E)],
         !.
 expect(_) -->
-        [token(Pos, _, _)],
+        [token(Pos, _)],
         { throw(parse_error(Pos)) }.
 
 
 :- begin_tests(parser).
 
 test(basic) :-
-        parse([token(_, int, 1), token(_, eof, eof)], int(1)).
+        parse([token(_, int(1)), token(_, eof)], int(1)).
 
 test(param) :-
-        parse([token(_, id, 'A001'), token(_, eof, eof)], value('A001')).
+        parse([token(_, id('A001')), token(_, eof)], value('A001')).
 
 test(let) :-
-        parse([token(_, let, _), token(_, id, 'a'), token(_, '=', _),
-               token(_, int, 1), token(_, '+', _), token(_, int, 2),
-               token(_, in, _),  token(_, id, 'a'),
-               token(_, eof, eof)],
+        parse([token(_, let), token(_, id('a')), token(_, '='),
+               token(_, int(1)), token(_, '+'), token(_, int(2)),
+               token(_, in),  token(_, id('a')),
+               token(_, eof)],
               let('a', op('+', int(1), int(2)), value('a'))).
 
 test(if) :-
-        parse([token(_, if, _),
-               token(_, int, 1), token(_, '<', _), token(_, int, 2),
-               token(_, then, _), token(_, int, 1),
-               token(_, else, _), token(_, int, 2),
-               token(_, endif, _), token(_, eof, eof)],
+        parse([token(_, if),
+               token(_, int(1)), token(_, '<'), token(_, int(2)),
+               token(_, then), token(_, int(1)),
+               token(_, else), token(_, int(2)),
+               token(_, endif), token(_, eof)],
               if(op('<', int(1), int(2)), int(1), int(2))).
 
 test(gt) :-
-        parse([token(_, int, 1), token(_, '<', _), token(_, int, 2),
-               token(_, eof, eof)],
+        parse([token(_, int(1)), token(_, '<'), token(_, int(2)),
+               token(_, eof)],
               op('<', int(1), int(2))).
 
 test(add) :-
-        parse([token(_, int, 1), token(_, '+', _), token(_, int, 2),
-               token(_, eof, eof)],
+        parse([token(_, int(1)), token(_, '+'), token(_, int(2)),
+               token(_, eof)],
               op('+', int(1), int(2))).
 
 test(mul) :-
-        parse([token(_, int, 1), token(_, '*', _), token(_, int, 2),
-               token(_, eof, eof)],
+        parse([token(_, int(1)), token(_, '*'), token(_, int(2)),
+               token(_, eof)],
               op('*', int(1), int(2))).
 
 test(addadd) :-
-        parse([token(_, int, 1), token(_, '+', _), token(_, int, 2),
-               token(_, '+', _), token(_, int, 3), token(_, eof, eof)],
+        parse([token(_, int(1)), token(_, '+'), token(_, int(2)),
+               token(_, '+'), token(_, int(3)), token(_, eof)],
               op('+', op('+', int(1), int(2)), int(3))).
 
 test(addmul) :-
-        parse([token(_, int, 1), token(_, '+', _), token(_, int, 2),
-               token(_, '*', _), token(_, int, 3), token(_, eof, eof)],
+        parse([token(_, int(1)), token(_, '+'), token(_, int(2)),
+               token(_, '*'), token(_, int(3)), token(_, eof)],
               op('+', int(1), op('*', int(2), int(3)))).
 
 :- end_tests(parser).
