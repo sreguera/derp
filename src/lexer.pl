@@ -100,18 +100,19 @@ separator(0'\n).
 separator(0'\v).
 separator(0'\f).
 separator(0'\r).
-separator(0'\ ).
-
+separator(0' ).
 
 delimiter(0'*).
 delimiter(0'/).
 delimiter(0'+).
 delimiter(0'-).
+delimiter(0'^).
+delimiter(0'=).
 delimiter(0'<).
 delimiter(0'>).
 delimiter(0'().
 delimiter(0')).
-delimiter(0'=).
+delimiter(0'').
 
 identifier_start_char(C) :-
         code_type(C, alpha).
@@ -156,14 +157,18 @@ test(pos) :-
         update_pos("hello", pos(1, 1), pos(1, 6)).
 
 test(delimiters) :-
-        scan("+*<",
-             [token(_, '+'), token(_, '*'), token(_, '<'),
+        scan("+-*/^=<>'()",
+             [token(_, '+'), token(_, '-'),
+              token(_, '*'), token(_, '/'), token(_, '^'),
+              token(_, '='), token(_, '<'), token(_, '>'),
+              token(_, '\''), token(_, '('), token(_, ')'),
               token(_, eof)]).
 
 test(keywords) :-
-        scan("if then else endif",
+        scan("if then else endif let in",
              [token(_, if), token(_, then),
               token(_, else), token(_, endif),
+              token(_, let), token(_, in),
               token(_, eof)]).
 
 test(numbers) :-

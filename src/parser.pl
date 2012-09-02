@@ -112,9 +112,13 @@ term_aux(T, T) -->
 primary(int(N)) -->
         [token(_, int(N))],
         !.
-primary(real(N)) -->
+primary(P) -->
         [token(_, real(N))],
-        !.
+        !,
+        (  uexp(U)
+        -> { P = unit(N, U) }
+        ;  { P = real(N) }
+        ).
 primary(P) -->
         [token(_, id(Name))],
         !,
@@ -133,6 +137,36 @@ arguments(A) -->
         expression(A),
         [token(_, ')')].
         
+
+uexp(E) -->
+        [token(_, '\'')],
+        uterm(E),
+        [token(_, '\'')].
+
+uterm(T) -->
+        ufactor(F),
+        uterm_aux(F, T).
+
+uterm_aux(T0, T) -->
+        multiplying_operator(O),
+        !,
+        ufactor(F),
+        uterm_aux(op(O, T0, F), T).
+uterm_aux(T, T) -->
+        [].
+
+ufactor(F) -->
+        [token(_, id(P))],
+        !,
+        (  [token(_, '^'), token(_, int(N))]
+        -> { F = op('^', id(P), N) }
+        ;  { F = id(P) }
+        ).
+ufactor(F) -->
+        [token(_, '(')],
+        !,
+        uterm(F),
+        expect(')').
 
 
 relational_operator('<') --> [token(_, '<')].

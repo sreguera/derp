@@ -71,6 +71,7 @@ analyze(if(C, E1, E2), Env, T, if(C1, E11, E22)) :-
         ).
 analyze(int(X), _, int, int(X)).
 analyze(real(X), _, real, real(X)).
+analyze(unit(X, U), _, unit(U), real(X)). 
 analyze(value(Name), Env, Type, Result) :-
         (  memberchk(entry(Name, Type), Env)
         -> Result = var(Name)
@@ -98,18 +99,31 @@ fun('tan', real, real).
 
 op('+', int, int, int, iadd).
 op('+', real, real, real, radd).
+op('+', unit(U), unit(U), unit(U), radd).
 op('-', int, int, int, isub).
 op('-', real, real, real, rsub).
+op('-', unit(U), unit(U), unit(U), rsub).
 op('*', int, int, int, imul).
 op('*', real, real, real, rmul).
+op('*', real, unit(U), unit(U), rmul).
+op('*', unit(U), real, unit(U), rmul).
+op('*', unit(U1), unit(U2), unit(U), rmul) :-
+        U = op('*', U1, U2).
 op('/', int, int, int, idiv).
 op('/', real, real, real, rdiv).
+op('/', real, unit(U), unit(U), rdiv).
+op('/', unit(U), real, unit(U), rdiv).
+op('/', unit(U1), unit(U2), unit(U), rdiv) :-
+        U = op('/', U1, U2).
 op('<', int, int, bool, ilt).
 op('<', real, real, bool, rlt).
+op('<', unit(U), unit(U), bool, rlt).
 op('>', int, int, bool, igt).
 op('>', real, real, bool, rgt).
+op('>', unit(U), unit(U), bool, rgt).
 op('=', int, int, bool, ieq).
 op('=', real, real, bool, req).
+op('=', unit(U), unit(U), bool, req).
 
 
 :- begin_tests(sem).
