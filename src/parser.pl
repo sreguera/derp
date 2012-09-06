@@ -35,37 +35,48 @@ AST.
                            argument :: expression)
                      ; int(value :: integer)
                      ; real(value :: float)
+                     ; unit(value :: float, unit)
                      ; value(name :: atom)
 
   type operator ---> * ; / ; + ; - ; < ; > ; =  
+
+  type unit ---> op(mult_operator,
+                    left :: unit,
+                    right :: unit)
+               ; op(^,
+                    id(name :: atom),
+                    power :: integer)
+               ; id(name :: atom)
+  
+  type mult_operator ---> * ; /
+  
   
 */
 
 parse(Tokens, AST) :-
-        phrase(definition(AST), Tokens).
+        phrase(full_expression(AST), Tokens).
 
-definition(P) -->
+full_expression(P) -->
         expression(P),
         expect(eof).
         
-expression(E) -->
+expression(let(Name, Value, Body)) -->
         [token(_, let)],
         !,
-        [token(_, id(Name)), token(_, '=')],
-        expression(V),
-        [token(_, in)],        
-        expression(Z),
-        { E = let(Name, V, Z) }.        
-expression(E) -->
+        expect(id(Name)),
+        expect('='),
+        expression(Value),
+        expect(in),        
+        expression(Body).
+expression(if(Condition, Then, Else)) -->
         [token(_, if)],
         !,
-        expression(R),
+        expression(Condition),
         expect(then),
-        expression(TL),
+        expression(Then),
         expect(else),
-        expression(EL),
-        expect(endif),
-        { E = if(R, TL, EL) }.
+        expression(Else),
+        expect(endif).
 expression(E) -->
         relation(E),
         !.
@@ -73,15 +84,14 @@ expression(_) -->
         [token(Pos, _)],
         { throw(parse_error(Pos)) }.
 
-relation(R) -->
-        simple_expression(E),
-        relation_aux(E, R).
+relation(Rel_Exp) -->
+        simple_expression(Exp),
+        relation_aux(Exp, Rel_Exp).
 
-relation_aux(E0, R) -->
-        relational_operator(O),
+relation_aux(E0, op(Rel_Op, E0, E)) -->
+        relational_operator(Rel_Op),
         !,
-        simple_expression(E),
-        { R = op(O, E0, E) }.
+        simple_expression(E).
 relation_aux(E, E) -->
         [].
 
@@ -90,10 +100,10 @@ simple_expression(E) -->
         simple_expression_aux(T, E).
 
 simple_expression_aux(E0, E) -->
-        binary_adding_operator(O),
+        binary_adding_operator(Add_Op),
         !,
         term(T),
-        simple_expression_aux(op(O, E0, T), E).
+        simple_expression_aux(op(Add_Op, E0, T), E).
 simple_expression_aux(E, E) -->
         [].
 
@@ -102,72 +112,76 @@ term(T) -->
         term_aux(F, T).
 
 term_aux(T0, T) -->
-        multiplying_operator(O),
+        multiplying_operator(Mul_Op),
         !,
         primary(F),
-        term_aux(op(O, T0, F), T).
+        term_aux(op(Mul_Op, T0, F), T).
 term_aux(T, T) -->
         [].
 
-primary(int(N)) -->
-        [token(_, int(N))],
+primary(int(Value)) -->
+        [token(_, int(Value))],
         !.
-primary(P) -->
-        [token(_, real(N))],
+primary(Real_Or_Unit) -->
+        [token(_, real(Value))],
         !,
-        (  uexp(U)
-        -> { P = unit(N, U) }
-        ;  { P = real(N) }
+        (  unit_expression(Unit)
+        -> { Real_Or_Unit = unit(Value, Unit) }
+        ;  { Real_Or_Unit = real(Value) }
         ).
-primary(P) -->
+primary(Fun_Or_Value) -->
         [token(_, id(Name))],
         !,
-        (  arguments(A)
-        -> { P = fun(Name, A) }
-        ;  { P = value(Name) }
+        (  arguments(Arg)
+        -> { Fun_Or_Value = fun(Name, Arg) }
+        ;  { Fun_Or_Value = value(Name) }
         ).
-primary(E) -->
+primary(Paren_Exp) -->
         [token(_, '(')],
         !,
-        expression(E),
+        expression(Paren_Exp),
         expect(')').
 
-arguments(A) -->
+arguments(Arg) -->
         [token(_, '(')],
-        expression(A),
-        [token(_, ')')].
-        
+        expression(Arg),
+        expect(')').
 
-uexp(E) -->
+
+% Units
+
+unit_expression(Unit) -->
         [token(_, '\'')],
-        uterm(E),
-        [token(_, '\'')].
+        unit_term(Unit),
+        expect('\'').
 
-uterm(T) -->
-        ufactor(F),
-        uterm_aux(F, T).
+unit_term(T) -->
+        unit_factor(F),
+        unit_term_aux(F, T).
 
-uterm_aux(T0, T) -->
-        multiplying_operator(O),
+unit_term_aux(T0, T) -->
+        multiplying_operator(Mul_Op),
         !,
-        ufactor(F),
-        uterm_aux(op(O, T0, F), T).
-uterm_aux(T, T) -->
+        unit_factor(F),
+        unit_term_aux(op(Mul_Op, T0, F), T).
+unit_term_aux(T, T) -->
         [].
 
-ufactor(F) -->
-        [token(_, id(P))],
+unit_factor(Base_Or_Power) -->
+        [token(_, id(Base))],
         !,
-        (  [token(_, '^'), token(_, int(N))]
-        -> { F = op('^', id(P), N) }
-        ;  { F = id(P) }
+        (  [token(_, '^'), token(_, int(Power))]
+        -> { Base_Or_Power = op('^', id(Base), Power) }
+        ;  { Base_Or_Power = id(Base) }
         ).
-ufactor(F) -->
+unit_factor(Paren_Unit) -->
         [token(_, '(')],
         !,
-        uterm(F),
+        unit_term(Paren_Unit),
         expect(')').
 
+
+% Operators
 
 relational_operator('<') --> [token(_, '<')].
 relational_operator('>') --> [token(_, '>')].
@@ -179,8 +193,14 @@ binary_adding_operator('-') --> [token(_, '-')].
 multiplying_operator('*') --> [token(_, '*')].
 multiplying_operator('/') --> [token(_, '/')].
 
-expect(E) -->
-        [token(_, E)],
+
+%% expect(+Element)
+%
+% Match Element as the next token in the list and discards it.
+% If not, throws a parser exception.
+
+expect(Element) -->
+        [token(_, Element)],
         !.
 expect(_) -->
         [token(Pos, _)],

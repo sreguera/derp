@@ -24,18 +24,19 @@ codes to a list of tokens.
 
   type token ---> token(position, contents)
 
-  type position ---> position(line :: integer, column :: integer)
+  type position ---> pos(line :: integer, column :: integer)
 
   type contents ---> int(value :: integer)
                    ; real(value :: float)
                    ; id(value :: atom)
-                   ; * ; / ; + ; - ; < ; > ; = ; ( ; ) 
+                   ; * ; / ; + ; - ; < ; > ; = ; ( ; ) ; ^ ; ' 
                    ; if ; then ; else ; endif ; let ; in
   
 */
 
 scan(Chars, Tokens) :-
-        scan(Chars, pos(1, 1), Tokens).
+        initial_pos(Pos), 
+        scan(Chars, Pos, Tokens).
 
 scan([], Pos, [token(Pos, eof)]).
 scan([Char|Chars], Pos, Tokens) :-
@@ -92,7 +93,6 @@ scan_number_aux([Char|Chars], NumChars, Pos, [Token|Tokens]) :-
            scan([Char|Chars], Pos1, Tokens)
         ).
 
-
 end_of_line(0'\n).
 
 separator(0'\t).
@@ -123,7 +123,6 @@ identifier_extend_char(C) :-
 digit_char(C) :-
         code_type(C, digit).
 
-
 reserved_word(if).
 reserved_word(then).
 reserved_word(else).
@@ -132,6 +131,15 @@ reserved_word(let).
 reserved_word(in).
 
 
+%% initial_pos(-Pos)
+
+initial_pos(pos(1, 1)).
+
+
+%% update_pos(+Chars, +Pos0, -Pos)
+%
+% Pos is the position after reading Chars starting in Pos0
+  
 update_pos([], pos(L, C), pos(L, C)).
 update_pos([X], pos(L0, _), pos(L, C)) :-
         end_of_line(X),
@@ -141,9 +149,12 @@ update_pos([_|Xs], pos(L, C0), pos(L, C)) :-
         length(Xs, Len),
         C is C0 + Len + 1.
 
+
 %% span(+Pred, +List, -Prefix, -Remainder)
+%
 % Prefix is the longest prefix of elements of List that satisfies Pred
 % Remainder is the remainder of the list
+
 span(Pred, [Elem|List], [Elem|Prefix], Remainder) :-
         call(Pred, Elem),
         !,
