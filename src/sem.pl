@@ -55,47 +55,54 @@ AST.
 analyze(AST, AST2) :-
         analyze(AST, [], _, AST2).
 
-analyze(let(Name, V, E), Env, T, let(Name, V1, E1)) :-
-        analyze(V, Env, VT, V1),
-        analyze(E, [entry(Name, VT)|Env], T, E1).
-analyze(if(C, E1, E2), Env, T, if(C1, E11, E22)) :-
-        analyze(C, Env, CT, C1),
-        (  CT = bool, !
+
+%% analyze(+Expression, +Environment, -Type, -NewExpression)
+
+analyze(let(Name, Value0, Body0), Env, Body_Type, let(Name, Value, Body)) :-
+        analyze(Value0, Env, Value_Type, Value),
+        analyze(Body0, [entry(Name, Value_Type)|Env], Body_Type, Body).
+analyze(if(Condition0, Then0, Else0), Env, If_Type, if(Condition, Then, Else)) :-
+        analyze(Condition0, Env, Condition_Type, Condition),
+        (  Condition_Type = bool, !
         ;  throw(invalid_cond)
         ),
-        analyze(E1, Env, T1, E11),
-        analyze(E2, Env, T2, E22),
-        (  T1 = T2
-        -> T1 = T
+        analyze(Then0, Env, Then_Type, Then),
+        analyze(Else0, Env, Else_Type, Else),
+        (  Then_Type = Else_Type
+        -> Then_Type = If_Type
         ;  throw(invalid_type)
         ).
-analyze(int(X), _, int, int(X)).
-analyze(real(X), _, real, real(X)).
-analyze(unit(X, U), _, unit(U), real(X)). 
-analyze(value(Name), Env, Type, Result) :-
+analyze(int(Value), _Env, int, int(Value)).
+analyze(real(Value), _Env, real, real(Value)).
+analyze(unit(Value, Unit), _Env, unit(Unit), real(Value)). 
+analyze(value(Name), Env, Type, Var_Or_Param) :-
         (  memberchk(entry(Name, Type), Env)
-        -> Result = var(Name)
+        -> Var_Or_Param = var(Name)
         ;  db:pardef(Name, Type)
-        -> Result = param(Name)
+        -> Var_Or_Param = param(Name)
         ;  throw(unknown_id)
         ).
-analyze(op(O, E1, E2), Env, T, op(OO, E11, E22)) :-
-        analyze(E1, Env, T1, E11),
-        analyze(E2, Env, T2, E22),
-        (  op(O, T1, T2, TR, Op)
-        -> T = TR, OO = Op
+analyze(op(Op0, Left0, Right0), Env, Op_Type, op(Op, Left, Right)) :-
+        analyze(Left0, Env, Left_Type, Left),
+        analyze(Right0, Env, Right_Type, Right),
+        (  op(Op0, Left_Type, Right_Type, Op_Type, Op), !
         ;  throw(invalid_op)
         ).
-analyze(fun(Name, E), Env, T, fun(Name, E1)) :-
-        analyze(E, Env, T1, E1),
-        (  fun(Name, T1, T)
-        -> !
+analyze(fun(Name, Arg0), Env, Fun_Type, fun(Name, Arg)) :-
+        analyze(Arg0, Env, Arg_Type, Arg),
+        (  fun(Name, Arg_Type, Fun_Type), !
         ;  throw(invalid_op)
         ).
+
+
+%% fun(Name, Arg_Type, Result_Type)
 
 fun('sin', real, real).
 fun('cos', real, real).
 fun('tan', real, real).
+
+
+%% op(Name, Left_Type, Right_Type, Result_Type, Typed_Op)
 
 op('+', int, int, int, iadd).
 op('+', real, real, real, radd).
