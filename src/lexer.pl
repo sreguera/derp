@@ -48,7 +48,7 @@ scan([Char|Chars], Pos, Tokens) :-
         -> scan_id(Char, Chars, Pos, Tokens)
         ;  digit_char(Char)
         -> scan_number(Char, Chars, Pos, Tokens)
-        ;  throw(unexpected_char(Char, Pos))
+        ;  throw(unexpected_char(Pos, Char))
         ).
 
 scan_separator(Char, Chars, Pos, Tokens) :-
@@ -187,7 +187,7 @@ test(numbers) :-
              [token(_, int(123)), token(_, real(2.5)), token(_, int(234)),
               token(_, eof)]).
 
-test(error, [throws(unexpected_char(0'!, pos(2, 5)))]) :-
+test(error, [throws(unexpected_char(pos(2, 5), 0'!))]) :-
         scan("\n123 !", _).
 
 :- end_tests(lexer).

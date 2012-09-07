@@ -23,10 +23,12 @@
 
 :- multifile prolog_message//1.
 
-prolog:message(unexpected_char(Char, pos(L, C))) -->
-        ['Unexpected char "~c" at line ~d, column ~d'-[Char, L, C]].
-prolog:message(parse_error(pos(L, C))) -->
-        ['Parse error at line ~d, column ~d'-[L, C]].
+prolog:message(unexpected_char(pos(L, C), Char)) -->
+        ['~d:~d: Unexpected char "~c"'-[L, C, Char]].
+prolog:message(unexpected_token(pos(L, C), Got, Expected)) -->
+        ['~d:~d: Unexpected token "~w" when looking for "~w"'-[L, C, Got, Expected]].
+prolog:message(unexpected_syntax(pos(L, C), Expected)) -->
+        ['~d:~d: Unexpected syntax when looking for ~w'-[L, C, Expected]].
 
 execute_source(Input, Output) :-
         lexer:scan(Input, Tokens),
@@ -61,10 +63,13 @@ parse_args([Arg|Args], Opts, [Arg|PosArgs]) :-
 
 :- begin_tests(newol).
 
-test(lexer_error, [throws(unexpected_char(0'!, _))]) :-
+test(lexer_error, [throws(unexpected_char(_, 0'!))]) :-
         execute_source("!", _).
 
-test(parser_error, [throws(parse_error(_))]) :-
+test(parser_error, [throws(unexpected_token(_, _, _))]) :-
+        execute_source("let let", _).
+
+test(parser_error, [throws(unexpected_syntax(_, _))]) :-
         execute_source("if if", _).
 
 test(invalid_cond, [throws(invalid_cond)]) :-

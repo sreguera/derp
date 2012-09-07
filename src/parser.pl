@@ -82,7 +82,7 @@ expression(E) -->
         !.
 expression(_) -->
         [token(Pos, _)],
-        { throw(parse_error(Pos)) }.
+        { throw(unexpected_syntax(Pos, expression)) }.
 
 relation(Rel_Exp) -->
         simple_expression(Exp),
@@ -202,9 +202,9 @@ multiplying_operator('/') --> [token(_, '/')].
 expect(Element) -->
         [token(_, Element)],
         !.
-expect(_) -->
-        [token(Pos, _)],
-        { throw(parse_error(Pos)) }.
+expect(Expected) -->
+        [token(Pos, Got)],
+        { throw(unexpected_token(Pos, Got, Expected)) }.
 
 
 :- begin_tests(parser).
