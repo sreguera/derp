@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-:- module(interp, [execute/2]).
+:- module(interp, [evaluate/2]).
 
 :- use_module(tm).
 
@@ -24,69 +24,54 @@ This module provides operations for interpreting an AST.
 
 */
 
-execute(Exp, Res) :-
+evaluate(Exp, Res) :-
         initial_env(Env),
-        execute(Exp, Env, Res).
-        
-execute(let(Name, Val, E), Env0, V) :-
-       execute(Val, Env0, VV),
-       put_env(Name, Env0, VV, Env),
-       execute(E, Env, V).
-execute(if(C, T, E), Env, V) :-
-        execute(C, Env, CV),
-        (  CV = true
-        -> execute(T, Env, V)
-        ;  execute(E, Env, V)
+        evaluate(Exp, Env, Res).
+
+
+%% evaluate(+Expression, +Environment, -Value)
+
+evaluate(let(Name, Value, Body), Env0, Body_Value) :-
+        evaluate(Value, Env0, Value_Value),
+        put_env(Name, Env0, Value_Value, Env),
+        evaluate(Body, Env, Body_Value).
+evaluate(if(Condition, Then, Else), Env, If_Value) :-
+        (  evaluate(Condition, Env, true)
+        -> evaluate(Then, Env, If_Value)
+        ;  evaluate(Else, Env, If_Value)
         ).
-execute(int(N), _, N).
-execute(real(N), _, N).
-execute(param(Name), _, V) :-
-        tm:parval(Name, V).
-execute(var(Name), Env, V) :-
-        get_env(Name, Env, V).
-execute(op(O, E1, E2), Env, V) :-
-        execute(E1, Env, V1),
-        execute(E2, Env, V2),
-        exec_op(O, V1, V2, V).
-execute(fun(Name, E), Env, V) :-
-        execute(E, Env, V1),
-        exec_fun(Name, V1, V).
+evaluate(int(Value), _Env, Value).
+evaluate(real(Value), _Env, Value).
+evaluate(param(Name), _Env, Value) :-
+        tm:parval(Name, Value).
+evaluate(var(Name), Env, Value) :-
+        get_env(Name, Env, Value).
+evaluate(op(Op, Left, Right), Env, Value) :-
+        evaluate(Left, Env, Left_Value),
+        evaluate(Right, Env, Right_Value),
+        eval_op(Op, Left_Value, Right_Value, Value).
+evaluate(fun(Name, Arg), Env, Value) :-
+        evaluate(Arg, Env, Arg_Value),
+        eval_fun(Name, Arg_Value, Value).
 
-exec_fun(sin, V1, V) :-
-        V is sin(V1).
-exec_fun(cos, V1, V) :-
-        V is cos(V1).
-exec_fun(tan, V1, V) :-
-        V is tan(V1).
+eval_fun(sin, Arg, V) :- V is sin(Arg).
+eval_fun(cos, Arg, V) :- V is cos(Arg).
+eval_fun(tan, Arg, V) :- V is tan(Arg).
 
-exec_op(iadd, V1, V2, V) :-
-        V is V1 + V2.
-exec_op(radd, V1, V2, V) :-
-        V is V1 + V2.
-exec_op(isub, V1, V2, V) :-
-        V is V1 - V2.
-exec_op(rsub, V1, V2, V) :-
-        V is V1 - V2.
-exec_op(imul, V1, V2, V) :-
-        V is V1 * V2.
-exec_op(rmul, V1, V2, V) :-
-        V is V1 * V2.
-exec_op(idiv, V1, V2, V) :-
-        V is div(V1, V2).
-exec_op(rdiv, V1, V2, V) :-
-        V is V1 / V2.
-exec_op(ilt, V1, V2, V) :-
-        ( V1 < V2 -> V = true ; V = false ).
-exec_op(rlt, V1, V2, V) :-
-        ( V1 < V2 -> V = true ; V = false ).
-exec_op(igt, V1, V2, V) :-
-        ( V1 > V2 -> V = true ; V = false ).
-exec_op(rgt, V1, V2, V) :-
-        ( V1 > V2 -> V = true ; V = false ).
-exec_op(ieq, V1, V2, V) :-
-        ( V1 =:= V2 -> V = true ; V = false ).
-exec_op(req, V1, V2, V) :-
-        ( V1 =:= V2 -> V = true ; V = false ).
+eval_op(iadd, V1, V2, V) :- V is V1 + V2.
+eval_op(radd, V1, V2, V) :- V is V1 + V2.
+eval_op(isub, V1, V2, V) :- V is V1 - V2.
+eval_op(rsub, V1, V2, V) :- V is V1 - V2.
+eval_op(imul, V1, V2, V) :- V is V1 * V2.
+eval_op(rmul, V1, V2, V) :- V is V1 * V2.
+eval_op(idiv, V1, V2, V) :- V is div(V1, V2).
+eval_op(rdiv, V1, V2, V) :- V is V1 / V2.
+eval_op(ilt, V1, V2, V) :- ( V1 < V2 -> V = true ; V = false ).
+eval_op(rlt, V1, V2, V) :- ( V1 < V2 -> V = true ; V = false ).
+eval_op(igt, V1, V2, V) :- ( V1 > V2 -> V = true ; V = false ).
+eval_op(rgt, V1, V2, V) :- ( V1 > V2 -> V = true ; V = false ).
+eval_op(ieq, V1, V2, V) :- ( V1 =:= V2 -> V = true ; V = false ).
+eval_op(req, V1, V2, V) :- ( V1 =:= V2 -> V = true ; V = false ).
 
 
 put_env(Name, Env, Value, [entry(Name, Value)|Env]).
@@ -109,18 +94,18 @@ var('e', E) :- E is e.
 :- begin_tests(interp).
 
 test(int) :-
-        execute(int(5), 5).
+        evaluate(int(5), 5).
 
 test(param) :-
-        execute(param('A001'), 5).
+        evaluate(param('A001'), 5).
 
 test(add) :-
-        execute(op(iadd, int(1), int(2)), 3).
+        evaluate(op(iadd, int(1), int(2)), 3).
 
 test(gt) :-
-        execute(op(ilt, int(1), int(2)), true).
+        evaluate(op(ilt, int(1), int(2)), true).
 
 test(if) :-
-        execute(if(op(ilt, int(1), int(2)), int(3), int(4)), 3).
+        evaluate(if(op(ilt, int(1), int(2)), int(3), int(4)), 3).
 
 :- end_tests(interp).

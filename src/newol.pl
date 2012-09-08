@@ -44,7 +44,7 @@ execute_source(Input, Output) :-
         lexer:scan(Input, Tokens),
         parser:parse(Tokens, AST),
         sem:analyze(AST, AST2),
-        interp:execute(AST2, Output).
+        interp:evaluate(AST2, Output).
 
 execute_file(Input_File) :-
         read_file_to_codes(Input_File, Source, []),
