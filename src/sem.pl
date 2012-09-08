@@ -53,15 +53,17 @@ AST.
 */
 
 analyze(AST, AST2) :-
-        analyze(AST, [], _, AST2).
+        initial_env(Env),
+        analyze(AST, Env, _, AST2).
 
 
 %% analyze(+Expression, +Environment, -Type, -NewExpression)
 
-analyze(let(_Pos, Name, Value0, Body0), Env, Body_Type,
+analyze(let(_Pos, Name, Value0, Body0), Env0, Body_Type,
         let(Name, Value, Body)) :-
-        analyze(Value0, Env, Value_Type, Value),
-        analyze(Body0, [entry(Name, Value_Type)|Env], Body_Type, Body).
+        analyze(Value0, Env0, Value_Type, Value),
+        put_env(Name, Env0, Value_Type, Env),
+        analyze(Body0, Env, Body_Type, Body).
 analyze(if(Pos, Condition0, Then0, Else0), Env, If_Type,
         if(Condition, Then, Else)) :-
         analyze(Condition0, Env, Condition_Type, Condition),
@@ -78,7 +80,7 @@ analyze(int(_Pos, Value), _Env, int, int(Value)).
 analyze(real(_Pos, Value), _Env, real, real(Value)).
 analyze(unit(_Pos, Value, Unit), _Env, unit(Unit), real(Value)). 
 analyze(value(Pos, Name), Env, Type, Var_Or_Param) :-
-        (  memberchk(entry(Name, Type), Env)
+        (  get_env(Name, Env, Type)
         -> Var_Or_Param = var(Name)
         ;  db:pardef(Name, Type)
         -> Var_Or_Param = param(Name)
@@ -95,6 +97,23 @@ analyze(fun(_Pos, Name, Arg0), Env, Fun_Type, fun(Name, Arg)) :-
         (  fun(Name, Arg_Type, Fun_Type), !
         ;  throw(invalid_op)
         ).
+
+
+put_env(Name, Env, Type, [entry(Name, Type)|Env]).
+
+get_env(Name, Env, Type) :-
+        memberchk(entry(Name, Type), Env).
+
+initial_env(Env) :-
+        setof(entry(Name, Type), var(Name, Type), Env).
+
+
+%% var(Name, Type)
+
+var('true', bool).
+var('false', bool).
+var('pi', real).
+var('e', real).
 
 
 %% fun(Name, Arg_Type, Result_Type)

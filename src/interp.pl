@@ -25,11 +25,13 @@ This module provides operations for interpreting an AST.
 */
 
 execute(Exp, Res) :-
-        execute(Exp, [], Res).
+        initial_env(Env),
+        execute(Exp, Env, Res).
         
-execute(let(Name, Val, E), Env, V) :-
-       execute(Val, Env, VV),
-       execute(E, [entry(Name, VV)|Env], V).
+execute(let(Name, Val, E), Env0, V) :-
+       execute(Val, Env0, VV),
+       put_env(Name, Env0, VV, Env),
+       execute(E, Env, V).
 execute(if(C, T, E), Env, V) :-
         execute(C, Env, CV),
         (  CV = true
@@ -41,7 +43,7 @@ execute(real(N), _, N).
 execute(param(Name), _, V) :-
         tm:parval(Name, V).
 execute(var(Name), Env, V) :-
-        memberchk(entry(Name, V), Env).
+        get_env(Name, Env, V).
 execute(op(O, E1, E2), Env, V) :-
         execute(E1, Env, V1),
         execute(E2, Env, V2),
@@ -85,6 +87,24 @@ exec_op(ieq, V1, V2, V) :-
         ( V1 =:= V2 -> V = true ; V = false ).
 exec_op(req, V1, V2, V) :-
         ( V1 =:= V2 -> V = true ; V = false ).
+
+
+put_env(Name, Env, Value, [entry(Name, Value)|Env]).
+
+get_env(Name, Env, Value) :-
+        memberchk(entry(Name, Value), Env).
+
+initial_env(Env) :-
+        setof(entry(Name, Value), var(Name, Value), Env).
+
+
+%% var(Name, Value)
+
+var('true', true).
+var('false', false).
+var('pi', Pi) :- Pi is pi.
+var('e', E) :- E is e.
+
 
 :- begin_tests(interp).
 
