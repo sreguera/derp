@@ -24,11 +24,21 @@
 :- multifile prolog_message//1.
 
 prolog:message(unexpected_char(pos(L, C), Char)) -->
-        ['~d:~d: Unexpected char "~c"'-[L, C, Char]].
+        ['~d:~d: Unexpected char: "~c"'-[L, C, Char]].
 prolog:message(unexpected_token(pos(L, C), Got, Expected)) -->
-        ['~d:~d: Unexpected token "~w" when looking for "~w"'-[L, C, Got, Expected]].
+        ['~d:~d: Unexpected token "~w" when looking for "~w"'
+        -[L, C, Got, Expected]].
 prolog:message(unexpected_syntax(pos(L, C), Expected)) -->
         ['~d:~d: Unexpected syntax when looking for ~w'-[L, C, Expected]].
+prolog:message(invalid_op(pos(L, C), Op, Left_Type, Right_Type)) -->
+        ['~d:~d: Invalid argument types for operator: ~w ~w ~w]'
+        -[L, C, Left_Type, Op, Right_Type]].
+prolog:message(unknown_id(pos(L, C), Name)) -->
+        ['~d:~d: Unknown name: "~w"'-[L, C, Name]].
+prolog:message(incompatible_if_cond(pos(L, C), Type)) -->
+        ['~d:~d: Incompatible condition type: ~w'-[L, C, Type]].
+prolog:message(incompatible_if_types(pos(L, C), Then, Else)) -->
+        ['~d:~d: Incompatible if types: ~w and ~w'-[L, C, Then, Else]].
 
 execute_source(Input, Output) :-
         lexer:scan(Input, Tokens),
@@ -72,16 +82,16 @@ test(parser_error, [throws(unexpected_token(_, _, _))]) :-
 test(parser_error, [throws(unexpected_syntax(_, _))]) :-
         execute_source("if if", _).
 
-test(invalid_cond, [throws(invalid_cond)]) :-
+test(invalid_cond, [throws(incompatible_if_cond(_, _))]) :-
         execute_source("if 1 then 1 else 2 endif", _).
 
-test(invalid_type, [throws(invalid_type)]) :-
+test(invalid_type, [throws(incompatible_if_types(_, _, _))]) :-
         execute_source("if 1 < 2 then 1 else 1.0 endif", _).
 
-test(unknown_id, [throws(unknown_id)]) :-
+test(unknown_id, [throws(unknown_id(_, _))]) :-
         execute_source("foo", _).
 
-test(invalid_op, [throws(invalid_op)]) :-
+test(invalid_op, [throws(invalid_op(_, _, _, _))]) :-
         execute_source("1.0 + 1", _).
 
 test(int) :-

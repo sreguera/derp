@@ -58,37 +58,39 @@ analyze(AST, AST2) :-
 
 %% analyze(+Expression, +Environment, -Type, -NewExpression)
 
-analyze(let(Name, Value0, Body0), Env, Body_Type, let(Name, Value, Body)) :-
+analyze(let(_Pos, Name, Value0, Body0), Env, Body_Type,
+        let(Name, Value, Body)) :-
         analyze(Value0, Env, Value_Type, Value),
         analyze(Body0, [entry(Name, Value_Type)|Env], Body_Type, Body).
-analyze(if(Condition0, Then0, Else0), Env, If_Type, if(Condition, Then, Else)) :-
+analyze(if(Pos, Condition0, Then0, Else0), Env, If_Type,
+        if(Condition, Then, Else)) :-
         analyze(Condition0, Env, Condition_Type, Condition),
         (  Condition_Type = bool, !
-        ;  throw(invalid_cond)
+        ;  throw(incompatible_if_cond(Pos, Condition_Type))
         ),
         analyze(Then0, Env, Then_Type, Then),
         analyze(Else0, Env, Else_Type, Else),
         (  Then_Type = Else_Type
         -> Then_Type = If_Type
-        ;  throw(invalid_type)
+        ;  throw(incompatible_if_types(Pos, Then_Type, Else_Type))
         ).
-analyze(int(Value), _Env, int, int(Value)).
-analyze(real(Value), _Env, real, real(Value)).
-analyze(unit(Value, Unit), _Env, unit(Unit), real(Value)). 
-analyze(value(Name), Env, Type, Var_Or_Param) :-
+analyze(int(_Pos, Value), _Env, int, int(Value)).
+analyze(real(_Pos, Value), _Env, real, real(Value)).
+analyze(unit(_Pos, Value, Unit), _Env, unit(Unit), real(Value)). 
+analyze(value(Pos, Name), Env, Type, Var_Or_Param) :-
         (  memberchk(entry(Name, Type), Env)
         -> Var_Or_Param = var(Name)
         ;  db:pardef(Name, Type)
         -> Var_Or_Param = param(Name)
-        ;  throw(unknown_id)
+        ;  throw(unknown_id(Pos, Name))
         ).
-analyze(op(Op0, Left0, Right0), Env, Op_Type, op(Op, Left, Right)) :-
+analyze(op(Pos, Op0, Left0, Right0), Env, Op_Type, op(Op, Left, Right)) :-
         analyze(Left0, Env, Left_Type, Left),
         analyze(Right0, Env, Right_Type, Right),
         (  op(Op0, Left_Type, Right_Type, Op_Type, Op), !
-        ;  throw(invalid_op)
+        ;  throw(invalid_op(Pos, Op0, Left_Type, Right_Type))
         ).
-analyze(fun(Name, Arg0), Env, Fun_Type, fun(Name, Arg)) :-
+analyze(fun(_Pos, Name, Arg0), Env, Fun_Type, fun(Name, Arg)) :-
         analyze(Arg0, Env, Arg_Type, Arg),
         (  fun(Name, Arg_Type, Fun_Type), !
         ;  throw(invalid_op)
@@ -136,13 +138,13 @@ op('=', unit(U), unit(U), bool, req).
 :- begin_tests(sem).
 
 test(add) :-
-        analyze(op('+', real(10.0), real(7.0)),
+        analyze(op(_, '+', real(_, 10.0), real(_, 7.0)),
                 op(radd, real(10.0), real(7.0))).
         
 test(if) :-
-        analyze(if(op('<', int(1), int(2)),
-                   op('+', real(10.0), real(7.0)),
-                   real(5.0)),
+        analyze(if(_, op(_, '<', int(_, 1), int(_, 2)),
+                   op(_, '+', real(_, 10.0), real(_, 7.0)),
+                   real(_, 5.0)),
                 if(op(ilt, int(1), int(2)),
                    op(radd, real(10.0), real(7.0)),
                    real(5.0))).
