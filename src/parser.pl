@@ -22,21 +22,32 @@
 This module provides operations for converting a list of tokens to an
 AST.
 
-  type expression ---> let(name :: atom,
+  type expression ---> let(position,
+                           name :: atom,
                            value :: expression,
                            body :: expression)
-                     ; if(condition :: expression,
+                     ; if(position,
+                          condition :: expression,
                           then :: expression,
                           else :: expression)
-                     ; op(operator,
+                     ; op(position,
+                          operator,
                           left :: expression,
                           right :: expression)
-                     ; fun(name :: atom,
+                     ; fun(position,
+                           name :: atom,
                            argument :: expression)
-                     ; int(value :: integer)
-                     ; real(value :: float)
-                     ; unit(value :: float, unit)
-                     ; value(name :: atom)
+                     ; int(position,
+                           value :: integer)
+                     ; real(position,
+                            value :: float)
+                     ; unit(position,
+                            value :: float,
+                            unit)
+                     ; value(position,
+                             name :: atom)
+
+  type position ---> pos(line :: integer, column :: integer)
 
   type operator ---> * ; / ; + ; - ; < ; > ; =  
 
