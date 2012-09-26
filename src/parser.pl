@@ -55,9 +55,8 @@ AST.
                     left :: unit,
                     right :: unit)
                ; op(^,
-                    id(name :: atom),
+                    name :: atom,
                     power :: integer)
-               ; id(name :: atom)
   
   type mult_operator ---> * ; /
   
@@ -178,12 +177,11 @@ unit_term_aux(T0, T) -->
 unit_term_aux(T, T) -->
         [].
 
-unit_factor(Base_Or_Power) -->
+unit_factor(op(^, Base, Exponent)) -->
         [token(_, id(Base))],
         !,
-        (  [token(_, '^'), token(_, int(Power))]
-        -> { Base_Or_Power = op('^', id(Base), Power) }
-        ;  { Base_Or_Power = id(Base) }
+        (  [token(_, '^'), token(_, int(Exponent))], !
+        ;  { Exponent = 1 }
         ).
 unit_factor(Paren_Unit) -->
         [token(_, '(')],
