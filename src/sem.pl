@@ -18,6 +18,7 @@
 :- module(sem, [analyze/2]).
 
 :- use_module(db).
+:- use_module(unit).
 
 /** <module> Semantic Analyzer
 
@@ -80,8 +81,7 @@ analyze(if(Pos, Condition0, Then0, Else0), Env, If_Type,
 analyze(int(_Pos, Value), _Env, int, int(Value)).
 analyze(real(_Pos, Value), _Env, real, real(Value)).
 analyze(unit(_Pos, Value, Unit), _Env, unit(Canonic_Unit), real(Value)) :-
-        nunit(Unit, Canonic_Unit),
-        format('Unit  : ~w~n', [unit(Canonic_Unit)]). 
+        unit:canon(Unit, Canonic_Unit).
 analyze(value(Pos, Name), Env, Type, Var_Or_Param) :-
         (  get_env(Name, Env, Type)
         -> Var_Or_Param = var(Name)
@@ -100,35 +100,6 @@ analyze(fun(_Pos, Name, Arg0), Env, Fun_Type, fun(Name, Arg)) :-
         (  fun(Name, Arg_Type, Fun_Type), !
         ;  throw(invalid_op)
         ).
-
-
-nunit(op(*, L, R), X) :-
-        nunit(L, L1),
-        nunit(R, R1),
-        uprod(L1, R1, X).
-nunit(op(/, L, R), X) :-
-        nunit(L, L1),
-        nunit(R, R1),
-        udiv(L1, R1, X).
-nunit(op(^, U, E), [U-E]).
-
-uprod(L, R, X) :-
-        combine(L, R, X).
-udiv(L, R, X) :-
-        maplist(negate, R, RN),
-        combine(L, RN, X).        
-
-negate(U-E, U-En) :-
-        En is E * -1.
-
-combine(X, Y, Z) :-
-        append(X, Y, XY),
-        keysort(XY, XY1),
-        group_pairs_by_key(XY1, XY11),
-        maplist(sumexp, XY11, Z).
-
-sumexp(U-Es, U-S) :-
-        sumlist(Es, S).
 
 
 put_env(Name, Env, Type, [entry(Name, Type)|Env]).
@@ -168,13 +139,13 @@ op('*', real, real, real, rmul).
 op('*', real, unit(U), unit(U), rmul).
 op('*', unit(U), real, unit(U), rmul).
 op('*', unit(U1), unit(U2), unit(U), rmul) :-
-        uprod(U1, U2, U).
+        unit:prod(U1, U2, U).
 op('/', int, int, int, idiv).
 op('/', real, real, real, rdiv).
 op('/', real, unit(U), unit(U), rdiv).
 op('/', unit(U), real, unit(U), rdiv).
 op('/', unit(U1), unit(U2), unit(U), rdiv) :-
-        udiv(U1, U2, U).
+        unit:div(U1, U2, U).
 op('<', int, int, bool, ilt).
 op('<', real, real, bool, rlt).
 op('<', unit(U), unit(U), bool, rlt).
