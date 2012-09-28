@@ -19,7 +19,7 @@
 
 /** <module> Unit handler
 
-This module provides operations for handling units of measure.
+This module provides operations for handling units of measurement.
 
   type unit ---> [factor]
 
@@ -28,17 +28,24 @@ This module provides operations for handling units of measure.
 */
 
 
-%% canon(+TreeUnit, -CanonUnit)
+%% canon(+Tree_Unit, -Canon_Unit, -Power_Of_Ten)
 
-canon(op(*, L, R), C) :-
-        canon(L, LC),
-        canon(R, RC),
-        prod(LC, RC, C).
-canon(op(/, L, R), C) :-
-        canon(L, LC),
-        canon(R, RC),
-        div(LC, RC, C).
-canon(op(^, U, E), [U-E]).
+canon(op(O, L, R), C, P) :-
+        canon(O, L, R, C, P).
+
+canon(*, L, R, C, P) :-
+        canon(L, LC, LP),
+        canon(R, RC, RP),
+        prod(LC, RC, C),
+        P is LP + RP.
+canon(/, L, R, C, P) :-
+        canon(L, LC, LP),
+        canon(R, RC, RP),
+        div(LC, RC, C),
+        P is LP - RP.
+canon(^, U, E, [B-E], PE) :-
+        canon1(U, B, P),
+        PE is P * E.
 
 
 %% prod(+Left, +Right, -Result)
@@ -57,13 +64,60 @@ div(L, R, X) :-
         prod(L, R_Inverted, X).        
 
 
-%% neg_exp(+Factor, -InverseFactor) 
+%% neg_exp(+Factor, -Inverse_Factor) 
 
 inv_factor(U-E, U-E_Inverted) :-
         E_Inverted is E * -1.
 
 
-%% sum_exp(+MultiFactor, -Factor)
+%% sum_exp(+Multi_Factor, -Factor)
 
 sum_exp(U-E_List, U-E) :-
         sumlist(E_List, E).
+
+
+%% unit(Symbol)
+
+unit('m').
+unit('s').
+unit('g').
+
+
+%% prefix(Symbol, Power_Of_Ten)
+
+prefix('G', 9).
+prefix('M', 6).
+prefix('k', 3).
+prefix('h', 2).
+prefix('da', 1).
+prefix('d', -1).
+prefix('c', -2).
+prefix('m', -3).
+prefix('u', -6).
+prefix('n', -9).
+
+
+canon1(Unit, Base_Unit, Power_Of_Ten) :-
+        (  unit(Unit)
+        -> Base_Unit = Unit,
+           Power_Of_Ten = 0
+        ;  prefix(Prefix, Power_Of_Ten),
+           unit(Base_Unit),
+           atom_concat(Prefix, Base_Unit, Unit)
+        -> true
+        ).
+
+
+:- begin_tests(unit).
+
+test(simple) :-
+        canon(op(/, op(^, 'm', 1), op(^, 's', 2)),
+              ['m'-1, 's'- -2],
+              0).
+
+test(simple2) :-
+        canon(op(/, op(^, 'm', 1), op(^, 'ms', 2)),
+              ['m'-1, 's'- -2],
+              6).
+
+:- end_tests(unit).

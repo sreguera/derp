@@ -39,6 +39,8 @@ prolog:message(incompatible_if_cond(pos(L, C), Type)) -->
         ['~d:~d: Incompatible condition type: ~w'-[L, C, Type]].
 prolog:message(incompatible_if_types(pos(L, C), Then, Else)) -->
         ['~d:~d: Incompatible if types: ~w and ~w'-[L, C, Then, Else]].
+prolog:message(invalid_unit(pos(L, C), Unit)) -->
+        ['~d:~d: Invalid unit: ~w'-[L, C, Unit]].
 
 execute_source(Input, Output) :-
         lexer:scan(Input, Tokens),

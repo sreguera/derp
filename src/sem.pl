@@ -80,8 +80,12 @@ analyze(if(Pos, Condition0, Then0, Else0), Env, If_Type,
         ).
 analyze(int(_Pos, Value), _Env, int, int(Value)).
 analyze(real(_Pos, Value), _Env, real, real(Value)).
-analyze(unit(_Pos, Value, Unit), _Env, unit(Canonic_Unit), real(Value)) :-
-        unit:canon(Unit, Canonic_Unit).
+analyze(unit(Pos, Value, Unit), _Env, unit(Canonic_Unit),
+        op(rmul, real(Factor), real(Value))) :-
+        (  unit:canon(Unit, Canonic_Unit, Power_Of_Ten)
+        -> Factor is 10 ** Power_Of_Ten
+        ;  throw(invalid_unit(Pos, Unit))
+        ).
 analyze(value(Pos, Name), Env, Type, Var_Or_Param) :-
         (  get_env(Name, Env, Type)
         -> Var_Or_Param = var(Name)
