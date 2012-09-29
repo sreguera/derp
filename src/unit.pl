@@ -43,8 +43,9 @@ canon(/, L, R, C, P) :-
         canon(R, RC, RP),
         div(LC, RC, C),
         P is LP - RP.
-canon(^, U, E, [B-E], PE) :-
+canon(^, U, E, Res, PE) :-
         canon1(U, B, P),
+        maplist(pow_factor(E), B, Res),
         PE is P * E.
 
 
@@ -64,7 +65,7 @@ div(L, R, X) :-
         prod(L, R_Inverted, X).        
 
 
-%% neg_exp(+Factor, -Inverse_Factor) 
+%% inv_factor(+Factor, -Inverse_Factor) 
 
 inv_factor(U-E, U-E_Inverted) :-
         E_Inverted is E * -1.
@@ -76,12 +77,21 @@ sum_exp(U-E_List, U-E) :-
         sumlist(E_List, E).
 
 
-%% unit(Symbol)
+%% pow_factor(+Exp, +Factor, -Powered_Factor)
 
-unit('m').
-unit('s').
-unit('g').
+pow_factor(E, U-Ue, U-UeE) :-
+        UeE is Ue * E.
 
+
+%% unit(Symbol, Base_Expression)
+
+unit('m', ['m'-1]). % metre
+unit('s', ['s'-1]). % second
+unit('g', ['g'-1]). % gram
+unit('A', ['A'-1]). % Ampere
+unit('K', ['K'-1]). % Kelvin
+unit('N', ['kg'-1, 'm'-1, 's'- -2]). % Newton
+unit('Pa', ['kg'-1, 'm'- -1, 's'- -2]). % Pascal
 
 %% prefix(Symbol, Power_Of_Ten)
 
@@ -98,12 +108,17 @@ prefix('n', -9).
 
 
 canon1(Unit, Base_Unit, Power_Of_Ten) :-
-        (  unit(Unit)
-        -> Base_Unit = Unit,
+        (  Unit = 'g'
+        -> Base_Unit = ['kg'-1],
+           Power_Of_Ten = -3
+        ;  Unit = 'kg'
+        -> Base_Unit = ['kg'-1],
            Power_Of_Ten = 0
+        ;  unit(Unit, Base_Unit)
+        -> Power_Of_Ten = 0
         ;  prefix(Prefix, Power_Of_Ten),
-           unit(Base_Unit),
-           atom_concat(Prefix, Base_Unit, Unit)
+           unit(Unit_Name, Base_Unit),
+           atom_concat(Prefix, Unit_Name, Unit)
         -> true
         ).
 
