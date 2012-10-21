@@ -31,26 +31,26 @@ evaluate(Exp, Res) :-
 
 %% evaluate(+Expression, +Environment, -Value)
 
-evaluate(let(Name, Value, Body), Env0, Body_Value) :-
+evaluate(let(_, Name, Value, Body), Env0, Body_Value) :-
         evaluate(Value, Env0, Value_Value),
         put_env(Name, Env0, Value_Value, Env),
         evaluate(Body, Env, Body_Value).
-evaluate(if(Condition, Then, Else), Env, If_Value) :-
+evaluate(if(_, Condition, Then, Else), Env, If_Value) :-
         (  evaluate(Condition, Env, true)
         -> evaluate(Then, Env, If_Value)
         ;  evaluate(Else, Env, If_Value)
         ).
-evaluate(int(Value), _Env, Value).
-evaluate(real(Value), _Env, Value).
-evaluate(param(Name), _Env, Value) :-
+evaluate(int(_, Value), _Env, Value).
+evaluate(real(_, Value), _Env, Value).
+evaluate(param(_, Name), _Env, Value) :-
         tm:parval(Name, Value).
-evaluate(var(Name), Env, Value) :-
+evaluate(var(_, Name), Env, Value) :-
         get_env(Name, Env, Value).
-evaluate(op(Op, Left, Right), Env, Value) :-
+evaluate(op(_, Op, Left, Right), Env, Value) :-
         evaluate(Left, Env, Left_Value),
         evaluate(Right, Env, Right_Value),
         eval_op(Op, Left_Value, Right_Value, Value).
-evaluate(fun(Name, Arg), Env, Value) :-
+evaluate(fun(_, Name, Arg), Env, Value) :-
         evaluate(Arg, Env, Arg_Value),
         eval_fun(Name, Arg_Value, Value).
 
@@ -94,18 +94,18 @@ var('e', E) :- E is e.
 :- begin_tests(interp).
 
 test(int) :-
-        evaluate(int(5), 5).
+        evaluate(int(_, 5), 5).
 
 test(param) :-
-        evaluate(param('A001'), 5).
+        evaluate(param(_, 'A001'), 5).
 
 test(add) :-
-        evaluate(op(iadd, int(1), int(2)), 3).
+        evaluate(op(_, iadd, int(_, 1), int(_, 2)), 3).
 
 test(gt) :-
-        evaluate(op(ilt, int(1), int(2)), true).
+        evaluate(op(_, ilt, int(_, 1), int(_, 2)), true).
 
 test(if) :-
-        evaluate(if(op(ilt, int(1), int(2)), int(3), int(4)), 3).
+        evaluate(if(_, op(_, ilt, int(_, 1), int(_, 2)), int(_, 3), int(_, 4)), 3).
 
 :- end_tests(interp).

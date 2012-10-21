@@ -25,21 +25,31 @@
 This module provides operations for converting an AST to a checked
 AST.
 
-  type expression ---> let(name :: atom,
+  type expression ---> let(position,
+                           name :: atom,
                            value :: expression,
                            body :: expression)
-                     ; if(condition :: expression,
+                     ; if(position,
+                          condition :: expression,
                           then :: expression,
                           else :: expression)
-                     ; op(operator,
+                     ; op(position,
+                          operator,
                           left :: expression,
                           right :: expression)
-                     ; fun(name :: fname,
+                     ; fun(position,
+                           name :: fname,
                            argument :: expression)
-                     ; int(value :: integer)
-                     ; real(value :: float)
-                     ; var(name :: atom)
-                     ; param(name :: atom)
+                     ; int(position,
+                           value :: integer)
+                     ; real(position,
+                            value :: float)
+                     ; var(position,
+                           name :: atom)
+                     ; param(position,
+                             name :: atom)
+
+  type position ---> pos(line :: integer, column :: integer)
 
   type operator ---> imul ; rmul
                    ; idiv ; rdiv
@@ -61,13 +71,13 @@ analyze(AST, AST2) :-
 
 %% analyze(+Expression, +Environment, -Type, -NewExpression)
 
-analyze(let(_Pos, Name, Value0, Body0), Env0, Body_Type,
-        let(Name, Value, Body)) :-
+analyze(let(Pos, Name, Value0, Body0), Env0, Body_Type,
+        let(Pos, Name, Value, Body)) :-
         analyze(Value0, Env0, Value_Type, Value),
         put_env(Name, Env0, Value_Type, Env),
         analyze(Body0, Env, Body_Type, Body).
 analyze(if(Pos, Condition0, Then0, Else0), Env, If_Type,
-        if(Condition, Then, Else)) :-
+        if(Pos, Condition, Then, Else)) :-
         analyze(Condition0, Env, Condition_Type, Condition),
         (  Condition_Type = bool, !
         ;  throw(incompatible_if_cond(Pos, Condition_Type))
@@ -78,28 +88,28 @@ analyze(if(Pos, Condition0, Then0, Else0), Env, If_Type,
         -> Then_Type = If_Type
         ;  throw(incompatible_if_types(Pos, Then_Type, Else_Type))
         ).
-analyze(int(_Pos, Value), _Env, int, int(Value)).
-analyze(real(_Pos, Value), _Env, real, real(Value)).
+analyze(int(Pos, Value), _Env, int, int(Pos, Value)).
+analyze(real(Pos, Value), _Env, real, real(Pos, Value)).
 analyze(unit(Pos, Value, Unit), _Env, unit(Canonic_Unit),
-        op(rmul, real(Factor), real(Value))) :-
+        op(Pos, rmul, real(Factor), real(Value))) :-
         (  unit:canon(Unit, Canonic_Unit, Power_Of_Ten)
         -> Factor is 10 ** Power_Of_Ten
         ;  throw(invalid_unit(Pos, Unit))
         ).
 analyze(value(Pos, Name), Env, Type, Var_Or_Param) :-
         (  get_env(Name, Env, Type)
-        -> Var_Or_Param = var(Name)
+        -> Var_Or_Param = var(Pos, Name)
         ;  db:pardef(Name, Type)
-        -> Var_Or_Param = param(Name)
+        -> Var_Or_Param = param(Pos, Name)
         ;  throw(unknown_id(Pos, Name))
         ).
-analyze(op(Pos, Op0, Left0, Right0), Env, Op_Type, op(Op, Left, Right)) :-
+analyze(op(Pos, Op0, Left0, Right0), Env, Op_Type, op(Pos, Op, Left, Right)) :-
         analyze(Left0, Env, Left_Type, Left),
         analyze(Right0, Env, Right_Type, Right),
         (  op(Op0, Left_Type, Right_Type, Op_Type, Op), !
         ;  throw(invalid_op(Pos, Op0, Left_Type, Right_Type))
         ).
-analyze(fun(_Pos, Name, Arg0), Env, Fun_Type, fun(Name, Arg)) :-
+analyze(fun(Pos, Name, Arg0), Env, Fun_Type, fun(Pos, Name, Arg)) :-
         analyze(Arg0, Env, Arg_Type, Arg),
         (  fun(Name, Arg_Type, Fun_Type), !
         ;  throw(invalid_op)
@@ -165,14 +175,14 @@ op('=', unit(U), unit(U), bool, req).
 
 test(add) :-
         analyze(op(_, '+', real(_, 10.0), real(_, 7.0)),
-                op(radd, real(10.0), real(7.0))).
+                op(_, radd, real(_, 10.0), real(_, 7.0))).
         
 test(if) :-
         analyze(if(_, op(_, '<', int(_, 1), int(_, 2)),
                    op(_, '+', real(_, 10.0), real(_, 7.0)),
                    real(_, 5.0)),
-                if(op(ilt, int(1), int(2)),
-                   op(radd, real(10.0), real(7.0)),
-                   real(5.0))).
+                if(_, op(_, ilt, int(_, 1), int(_, 2)),
+                   op(_, radd, real(_, 10.0), real(_, 7.0)),
+                   real(_, 5.0))).
 
 :- end_tests(sem).
