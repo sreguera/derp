@@ -66,7 +66,11 @@ AST.
 analyze(AST, AST2) :-
         initial_env(Env),
         analyze(AST, Env, Type, AST2),
-        format('Result: ~w~n', [Type]). 
+        format('Result: ~w~n', [Type]),
+        (  unused_vars(AST2, [Pos-Var|Vars])
+        -> throw(unused_var(Pos, Var))
+        ),
+        format('Unused: ~w~n', [Vars]).
 
 
 %% analyze(+Expression, +Environment, -Type, -NewExpression)
@@ -169,6 +173,43 @@ op('>', unit(U), unit(U), bool, rgt).
 op('=', int, int, bool, ieq).
 op('=', real, real, bool, req).
 op('=', unit(U), unit(U), bool, req).
+
+
+
+%% unused_vars(+Expression, -Unused)
+
+unused_vars(Expression, Unused) :-
+        unused_vars(Expression, Unused, _).
+
+
+%% unused_vars(+Expression, -Unused, -Free)
+
+unused_vars(let(Pos, Name, Value, Body), Unused, Free) :-
+        unused_vars(Value, Value_Unused, Value_Free),
+        unused_vars(Body, Body_Unused, Body_Free),
+        (  selectchk(Name, Body_Free, Let_Body_Free)
+        -> ord_union(Value_Unused, Body_Unused, Unused),
+           ord_union(Value_Free, Let_Body_Free, Free)
+        ;  ord_union([Value_Unused, Body_Unused, [Pos-Name]], Unused),
+           ord_union(Value_Free, Body_Free, Free)
+        ).
+unused_vars(if(_, Condition, Then, Else), Unused, Free) :-
+        unused_vars(Condition, Condition_Unused, Condition_Free),
+        unused_vars(Then, Then_Unused, Then_Free),
+        unused_vars(Else, Else_Unused, Else_Free),
+        ord_union([Condition_Unused, Then_Unused, Else_Unused], Unused),
+        ord_union([Condition_Free, Then_Free, Else_Free], Free).
+unused_vars(int(_, _Value), [], []).
+unused_vars(real(_, _Value), [], []).
+unused_vars(param(_, _Name), [], []).
+unused_vars(var(_, Name), [], [Name]).
+unused_vars(op(_, _Op, Left, Right), Unused, Free) :-
+        unused_vars(Left, Left_Unused, Left_Free),
+        unused_vars(Right, Right_Unused, Right_Free),
+        ord_union(Left_Unused, Right_Unused, Unused),
+        ord_union(Left_Free, Right_Free, Free).
+unused_vars(fun(_, _Name, Arg), Unused, Free) :-
+        unused_vars(Arg, Unused, Free).
 
 
 :- begin_tests(sem).
