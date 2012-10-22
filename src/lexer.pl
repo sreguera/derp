@@ -48,6 +48,8 @@ scan([Char|Chars], Pos, Tokens) :-
         -> scan_id(Char, Chars, Pos, Tokens)
         ;  digit_char(Char)
         -> scan_number(Char, Chars, Pos, Tokens)
+        ;  string_delimiter(Char)
+        -> scan_string(Char, Chars, Pos, Tokens)
         ;  throw(unexpected_char(Pos, Char))
         ).
 
@@ -70,6 +72,20 @@ scan_id(Char, Chars, Pos, [token(Pos, Contents)|Tokens]) :-
         update_pos([Char|Extend], Pos, Pos1),
         scan(RestChars, Pos1, Tokens).
 
+scan_string(_Char, Chars, Pos, [token(Pos, str(String_Chars))|Tokens]) :-
+        string_chars(Chars, String_Chars, Rest_Chars),
+        update_pos([_, _|String_Chars], Pos, Pos1),
+        scan(Rest_Chars, Pos1, Tokens).
+
+string_chars([], [], []).
+string_chars([Char|Chars], [Char|String_Chars], Rest_Chars) :-
+        Char \= 0'",
+        !,
+        string_chars(Chars, String_Chars, Rest_Chars).
+string_chars([Char|Chars], [], Chars) :-
+        Char = 0'",
+        !.
+  
 scan_number(Char, Chars, Pos, Tokens) :-
         span(digit_char, Chars, Extend, RestChars),
         scan_number_aux(RestChars, [Char|Extend], Pos, Tokens).
@@ -113,6 +129,8 @@ delimiter(0'>).
 delimiter(0'().
 delimiter(0')).
 delimiter(0'').
+
+string_delimiter(0'").
 
 identifier_start_char(C) :-
         code_type(C, alpha).
@@ -185,6 +203,11 @@ test(keywords) :-
 test(numbers) :-
         scan("123 2.5 234",
              [token(_, int(123)), token(_, real(2.5)), token(_, int(234)),
+              token(_, eof)]).
+
+test(string) :-
+        scan("  \"abcd\"  ",
+             [token(_, str("abcd")),
               token(_, eof)]).
 
 test(error, [throws(unexpected_char(pos(2, 5), 0'!))]) :-

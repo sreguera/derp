@@ -44,6 +44,8 @@ AST.
                      ; unit(position,
                             value :: float,
                             unit)
+                     ; str(position,
+                           value :: string)
                      ; value(position,
                              name :: atom)
 
@@ -139,6 +141,9 @@ primary(Real_Or_Unit) -->
         -> { Real_Or_Unit = unit(Pos, Value, Unit) }
         ;  { Real_Or_Unit = real(Pos, Value) }
         ).
+primary(str(Pos, Value)) -->
+        [token(Pos, str(Value))],
+        !.
 primary(Fun_Or_Value) -->
         [token(Pos, id(Name))],
         !,

@@ -42,6 +42,7 @@ evaluate(if(_, Condition, Then, Else), Env, If_Value) :-
         ).
 evaluate(int(_, Value), _Env, Value).
 evaluate(real(_, Value), _Env, Value).
+evaluate(str(_, Value), _Env, Value).
 evaluate(param(_, Name), _Env, Value) :-
         tm:parval(Name, Value).
 evaluate(var(_, Name), Env, Value) :-

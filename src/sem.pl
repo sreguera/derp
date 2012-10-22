@@ -44,6 +44,8 @@ AST.
                            value :: integer)
                      ; real(position,
                             value :: float)
+                     ; str(position,
+                           value :: float)
                      ; var(position,
                            name :: atom)
                      ; param(position,
@@ -69,8 +71,8 @@ analyze(AST, AST2) :-
         format('Result: ~w~n', [Type]),
         (  unused_vars(AST2, [Pos-Var|Vars])
         -> throw(unused_var(Pos, Var))
-        ),
-        format('Unused: ~w~n', [Vars]).
+        ;  true
+        ).
 
 
 %% analyze(+Expression, +Environment, -Type, -NewExpression)
@@ -100,6 +102,7 @@ analyze(unit(Pos, Value, Unit), _Env, unit(Canonic_Unit),
         -> Factor is 10 ** Power_Of_Ten
         ;  throw(invalid_unit(Pos, Unit))
         ).
+analyze(str(Pos, Value), _Env, str, str(Pos, Value)).
 analyze(value(Pos, Name), Env, Type, Var_Or_Param) :-
         (  get_env(Name, Env, Type)
         -> Var_Or_Param = var(Pos, Name)
@@ -201,6 +204,7 @@ unused_vars(if(_, Condition, Then, Else), Unused, Free) :-
         ord_union([Condition_Free, Then_Free, Else_Free], Free).
 unused_vars(int(_, _Value), [], []).
 unused_vars(real(_, _Value), [], []).
+unused_vars(str(_, _Value), [], []).
 unused_vars(param(_, _Name), [], []).
 unused_vars(var(_, Name), [], [Name]).
 unused_vars(op(_, _Op, Left, Right), Unused, Free) :-
