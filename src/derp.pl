@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-:- module(newol, []).
+:- module(derp, []).
 
 :- use_module(lexer).
 :- use_module(parser).
@@ -75,7 +75,7 @@ parse_args([], [], []).
 parse_args([Arg|Args], Opts, [Arg|PosArgs]) :-
         parse_args(Args, Opts, PosArgs).
 
-:- begin_tests(newol).
+:- begin_tests(derp).
 
 :- set_prolog_flag(double_quotes, codes).
 
@@ -121,4 +121,4 @@ test(fun) :-
 test(if) :-
         execute_source("if 1 < 2 then 3 else 4 endif", 3).
 
-:- end_tests(newol).
+:- end_tests(derp).
