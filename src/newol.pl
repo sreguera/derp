@@ -77,6 +77,8 @@ parse_args([Arg|Args], Opts, [Arg|PosArgs]) :-
 
 :- begin_tests(newol).
 
+:- set_prolog_flag(double_quotes, codes).
+
 test(lexer_error, [throws(unexpected_char(_, 0'!))]) :-
         execute_source("!", _).
 

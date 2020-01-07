@@ -182,6 +182,8 @@ span(_, Remainder, [], Remainder).
 
 :- begin_tests(lexer).
 
+:- set_prolog_flag(double_quotes, codes).
+
 test(pos) :-
         update_pos("hello", pos(1, 1), pos(1, 6)).
 
